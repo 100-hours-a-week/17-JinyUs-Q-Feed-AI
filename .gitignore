@@ -7,6 +7,7 @@ __pycache__/
 .venv/
 .env
 
+
 # IDE
 .idea/
 .vscode/
@@ -20,3 +21,6 @@ htmlcov/
 # uv
 .python-version
 EOF
+
+# data
+audio_data/
