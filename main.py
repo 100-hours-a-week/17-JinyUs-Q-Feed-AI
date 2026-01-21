@@ -3,9 +3,9 @@ from routers import stt,feedback
 
 app = FastAPI()
 
-app.include_router(stt.router, prefix="/api/v1", tags=["stt"])
-app.include_router(feedback.router, prefix="/api/v1", tags=["feedback"])
+app.include_router(stt.router, prefix="/ai", tags=["stt"])
+app.include_router(feedback.router, prefix="/ai", tags=["feedback"])
 
-@app.get("/")
+@app.get("/ai")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "FastAPI is running"}
