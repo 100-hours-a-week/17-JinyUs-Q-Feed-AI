@@ -46,6 +46,14 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
+      # .env 파일 생성
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          HUGGINGFACE_API_KEY=${{ secrets.HUGGINGFACE_API_KEY }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          EOF
+
       # 테스트 실행
       - name: Run test
         run: uv run pytest
