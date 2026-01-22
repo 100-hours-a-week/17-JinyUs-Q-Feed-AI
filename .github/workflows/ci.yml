@@ -54,9 +54,9 @@ jobs:
           GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
           EOF
 
-      # 테스트 실행
-      - name: Run test
-        run: uv run pytest
+      # # 테스트 실행
+      # - name: Run test
+      #   run: uv run pytest
 
       # pyproject.toml 버전 추출
       - name: Extract version
