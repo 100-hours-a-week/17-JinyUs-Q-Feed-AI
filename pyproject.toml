@@ -1,6 +1,6 @@
 [project]
 name = "qfeed"
-version = "1.0.0"
+version = "0.0.0"
 description = "AI-powered technical interview practice platform"
 readme = "README.md"
 requires-python = ">=3.12"

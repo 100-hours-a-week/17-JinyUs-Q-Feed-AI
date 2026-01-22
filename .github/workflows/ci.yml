@@ -91,7 +91,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ai-app-${{ steps.version.outputs.version }}
+          name: ai-v${{ steps.version.outputs.version }}
           path: ai-${{ steps.version.outputs.version }}.tar.gz
 
       # # CI 실패 시 Discord 알림
