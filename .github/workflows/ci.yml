@@ -1,0 +1,101 @@
+name: AI CI
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      # 코드 체크아웃
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Gitleaks 전체 히스토리 검사 위해 설정
+
+      # Gitleaks - credential/secret 노출 검사
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Ruff 린트 검사
+      - name: Lint code with Ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check ."
+
+      # Python 3.12 설정
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # uv 설치
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      # 의존성 설치
+      - name: Install dependencies
+        run: uv sync
+
+      # 테스트 실행
+      - name: Run test
+        run: uv run pytest
+
+      # pyproject.toml 버전 추출
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(python -c "
+          import tomllib
+          with open('pyproject.toml', 'rb') as f:
+              data = tomllib.load(f)
+          print(data['project']['version'])
+          ")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      # 배포 아티팩트 생성
+      - name: Package artifact
+        run: |
+          mkdir deploy-package
+          rsync -av \
+            --exclude='.git*' \
+            --exclude='tests/' \
+            --exclude='*.pyc' \
+            --exclude='__pycache__/' \
+            --exclude='.venv*' \
+            --exclude='.github/' \
+            --exclude='.env*' \
+            ./ deploy-package/
+          cd deploy-package && tar -czf ../ai_${{ steps.version.outputs.version }}.tar.gz .
+
+      # 아티팩트 업로드
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-app-${{ steps.version.outputs.version }}
+          path: ai-${{ steps.version.outputs.version }}.tar.gz
+
+      # CI 실패 시 Discord 알림
+      - name: Discord Notification on Failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{
+                 "embeds": [{
+                   "title": "❌ CI 실패",
+                   "description": "**Repository:** `${{ github.repository }}`\n**Branch:** `${{ github.ref_name }}`\n**Workflow:** `${{ github.workflow }}`\n**Event:** `${{ github.event_name }}`\n**작성자:** `${{ github.actor }}`",
+                   "color": 16711680
+                 }],
+                 "content": "❗ CI 실패: `${{ github.ref_name }}` 브랜치 확인해주세요!"
+               }' \
+               ${{ secrets.DISCORD_WEBHOOK }}
