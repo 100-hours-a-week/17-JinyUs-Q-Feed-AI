@@ -92,18 +92,18 @@ jobs:
           name: ai-app-${{ steps.version.outputs.version }}
           path: ai-${{ steps.version.outputs.version }}.tar.gz
 
-      # CI 실패 시 Discord 알림
-      - name: Discord Notification on Failure
-        if: failure()
-        run: |
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d '{
-                 "embeds": [{
-                   "title": "❌ CI 실패",
-                   "description": "**Repository:** `${{ github.repository }}`\n**Branch:** `${{ github.ref_name }}`\n**Workflow:** `${{ github.workflow }}`\n**Event:** `${{ github.event_name }}`\n**작성자:** `${{ github.actor }}`",
-                   "color": 16711680
-                 }],
-                 "content": "❗ CI 실패: `${{ github.ref_name }}` 브랜치 확인해주세요!"
-               }' \
-               ${{ secrets.DISCORD_WEBHOOK }}
+      # # CI 실패 시 Discord 알림
+      # - name: Discord Notification on Failure
+      #   if: failure()
+      #   run: |
+      #     curl -H "Content-Type: application/json" \
+      #          -X POST \
+      #          -d '{
+      #            "embeds": [{
+      #              "title": "❌ CI 실패",
+      #              "description": "**Repository:** `${{ github.repository }}`\n**Branch:** `${{ github.ref_name }}`\n**Workflow:** `${{ github.workflow }}`\n**Event:** `${{ github.event_name }}`\n**작성자:** `${{ github.actor }}`",
+      #              "color": 16711680
+      #            }],
+      #            "content": "❗ CI 실패: `${{ github.ref_name }}` 브랜치 확인해주세요!"
+      #          }' \
+      #          ${{ secrets.DISCORD_WEBHOOK }}
