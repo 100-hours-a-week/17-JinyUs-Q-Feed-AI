@@ -83,6 +83,7 @@ jobs:
             --exclude='.github/' \
             --exclude='.env*' \
             --exclude='.ruff_cache/' \
+            --exclude='deploy-package/' \
             ./ deploy-package/
           tar -czf ai-${{ steps.version.outputs.version }}.tar.gz -C deploy-package .
 
