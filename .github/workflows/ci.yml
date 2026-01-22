@@ -82,15 +82,16 @@ jobs:
             --exclude='.venv*' \
             --exclude='.github/' \
             --exclude='.env*' \
+            --exclude='.ruff_cache/' \
             ./ deploy-package/
-          cd deploy-package && tar -czf ../ai_${{ steps.version.outputs.version }}.tar.gz .
+          cd deploy-package && tar -czf ../ai-${{ steps.version.outputs.version }}.tar.gz .
 
       # 아티팩트 업로드
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ai-app-${{ steps.version.outputs.version }}
-          path: ai-${{ steps.version.outputs.version }}.tar.gz
+          path: ai_${{ steps.version.outputs.version }}.tar.gz
 
       # # CI 실패 시 Discord 알림
       # - name: Discord Notification on Failure
