@@ -7,6 +7,7 @@ headers = {
     "Authorization": f"Bearer {settings.huggingface_api_key}",
 }
 
+# S3 테스트 후 삭제해도됨
 CONTENT_TYPE_MAP = {
     ".mp3": "audio/mpeg",
     ".mp4": "audio/mp4",
