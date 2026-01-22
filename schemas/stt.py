@@ -19,6 +19,8 @@ class STTRequest(BaseModel):
         return v
 
 class STTData(BaseModel):
+    user_id : int = Field(..., description="사용자 ID")
+    session_id : int = Field(..., description="세션 ID")
     text: str = Field(..., description="변환된 텍스트")
 
 STTResponse = BaseResponse[STTData]

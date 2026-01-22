@@ -36,13 +36,6 @@ async def get_file_size(url: str) -> int:
 
 
 async def process_transcribe(audio_url: str) -> str:
-        # file_size = await get_file_size(audio_url)
-
-        # if file_size is None:
-        #     raise AppException(ErrorMessage.AUDIO_NOT_FOUND)
-        
-        # if file_size > MAX_SIZE:
-        #     raise AppException(ErrorMessage.AUDIO_TOO_LARGE)
         
         provider = get_stt_provider()
         print(f"Provider: {provider}")  # 디버깅용
