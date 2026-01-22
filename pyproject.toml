@@ -17,10 +17,12 @@ dev = [
     "ruff>=0.14.13",
 ]
 
+[tool.ruff]
+ignore = ["E501"]  # 긴 줄 길이 오류 무시
+line-length = 88
+
 [tool.ruff.lint]
 # "E": PEP 8 스타일 가이드를 위반한 형식 오류 검사
 # "F": 코드 논리적 오류와 무의미한 코드 검사
 # "S": 보안 취약점 검사
 select = ["E", "F", "S"]
-ignore = ["E501"]  # 긴 줄 길이 오류 무시
-line-length = 88
