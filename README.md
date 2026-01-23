@@ -33,19 +33,22 @@ uv run pytest
 ```bash
 uv run ruff check .
 uv run ruff format --check .
-'''
+```
 
 ## API 목록
 
-| Method | Endpoint           | 설명               |
-| ------ | ------------------ | ------------------ |
-| GET    | `/`                | 서버 상태 확인     |
-| POST   | `/api/v1/stt`      | 음성 → 텍스트 변환 |
-| POST   | `/api/v1/feedback` | AI 피드백 생성     |
+| Method | Endpoint          | 설명               |
+| ------ | ----------------- | ------------------ |
+| GET    | `/ai`             | 서버 상태 확인     |
+| POST   | `/ai/v1/stt`      | 음성 → 텍스트 변환 |
+| POST   | `/ai/v1/feedback` | AI 피드백 생성     |
 
 ## 파일 구조
 
 '''
 tree -I "node_modules|.git|**pycache**|audio_data"
 '''
+
+```
+
 ```
