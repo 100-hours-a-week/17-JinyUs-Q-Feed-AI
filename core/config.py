@@ -8,6 +8,14 @@ class Settings(BaseSettings):
     huggingface_api_key: str
     huggingface_model_id: str = "openai/whisper-large-v3-turbo"
 
+    # gemini
+    gemini_api_key: str
+    gemini_model_id: str = "gemini-2.5-pro"
+
+    # Callback 설정 (V2)
+    feedback_callback_url: str = "http://backend-server/ai/interview/feedback/generate"
+    callback_timeout_seconds: int = 30
+
     #v3 : RunPod
     
     model_config = {"env_file": ".env"}
