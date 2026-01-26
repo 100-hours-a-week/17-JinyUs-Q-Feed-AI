@@ -6,6 +6,16 @@ from utils.ssm_loader import get_ssm_loader
 class Settings(BaseSettings):
     environment: str = "local"  # local | production
 
+    # 로그 설정 추가
+    log_dir: str = "./logs"
+
+    @property
+    def log_directory(self) -> str:
+        if self.log_dir:
+            return self.log_dir
+        # 환경별 기본값 설정 -> ec2 서버 log 경로 확정되면 수정할 것
+        return "./logs" if self.environment == "local" else "/var/log/qfeed/ai"
+
     stt_provider: str = "huggingface"  # or "runpod"
 
     #v1 : HuggingFace
