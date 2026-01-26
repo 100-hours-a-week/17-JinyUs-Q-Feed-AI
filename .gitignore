@@ -24,3 +24,6 @@ EOF
 
 # data
 audio_data/
+
+# jupyter
+jupyter/

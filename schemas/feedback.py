@@ -34,11 +34,6 @@ class BadCaseType(str, Enum):
     TOO_SHORT = "TOO_SHORT"   # 너무 짧은 답변
     INAPPROPRIATE = "INAPPROPRIATE"        # 부적절한 내용            
 
-class BadCaseFeedback(BaseModel):
-    """Bad Case 전용 피드백"""
-    message: str  # "답변이 너무 짧습니다"
-    guidance: str  # "더 자세하게 설명해주세요..."    
-
 BAD_CASE_MESSAGES = {
     BadCaseType.REFUSE_TO_ANSWER: {
         "message": "답변이 감지되지 않았습니다.",

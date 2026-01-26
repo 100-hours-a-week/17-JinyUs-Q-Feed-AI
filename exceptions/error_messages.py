@@ -7,20 +7,33 @@ class ErrorMessage(str, Enum):
     # STT 관련
     AUDIO_TOO_LONG = "audio_too_long"
     AUDIO_TOO_LARGE = "audio_too_large"
+    AUDIO_EMPTY = "audio_empty"
     INVALID_AUDIO_FORMAT = "invalid_audio_format"
     AUDIO_NOT_FOUND = "audio_not_found"
     SESSION_NOT_FOUND = "session_not_found"
     STT_TIMEOUT = "stt_timeout"
-    AUDIO_UNPROCESSABLE = "audio_unprocessable"
+    AUDIO_UNPROCESSABLE = "audio_unprocessable" 
     STT_CONVERSION_FAILED = "stt_conversion_failed"
     STT_SERVICE_UNAVAILABLE = "stt_service_unavailable"
 
     # Feedback 관련
-    FEEDBACK_GENERATION_FAILED = "feedback_generation_failed"
+    EMPTY_QUESTION = "empty_question"
+    EMPTY_ANSWER = "empty_answer"
+    ANSWER_TOO_SHORT = "answer_too_short"
+    ANSWER_TOO_LONG = "answer_too_long"
     INVALID_ANSWER_FORMAT = "invalid_answer_format"
+    FEEDBACK_ALREADY_IN_PROGRESS = "feedback_already_in_progress"
+    RUBRIC_EVALUATION_FAILED = "rubric_evaluation_failed"
+    FEEDBACK_GENERATION_FAILED = "feedback_generation_failed"
+
+    # LLM 관련
+    LLM_SERVICE_UNAVAILABLE = "llm_service_unavailable"
+    LLM_RESPONSE_PARSE_FAILED = "llm_response_parse_failed"
+    LLM_TIMEOUT = "llm_timeout"
 
     # 공통
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
+    INTERNAL_SERVER_ERROR = "internal_server_error"
     SERVICE_TEMPORARILY_UNAVAILABLE = "service_temporarily_unavailable"
 
 
@@ -29,7 +42,12 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     # 400 Bad Request
     ErrorMessage.AUDIO_TOO_LONG: 400,
     ErrorMessage.AUDIO_TOO_LARGE: 400,
+    ErrorMessage.AUDIO_EMPTY: 400,
     ErrorMessage.INVALID_AUDIO_FORMAT: 400,
+    ErrorMessage.EMPTY_QUESTION: 400,
+    ErrorMessage.EMPTY_ANSWER: 400,
+    ErrorMessage.ANSWER_TOO_SHORT: 400,
+    ErrorMessage.ANSWER_TOO_LONG: 400,
     ErrorMessage.INVALID_ANSWER_FORMAT: 400,
 
     # 404 Not Found
@@ -38,6 +56,10 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
 
     # 408 Request Timeout
     ErrorMessage.STT_TIMEOUT: 408,
+    ErrorMessage.LLM_TIMEOUT: 408,
+
+    # 409 Conflict
+    ErrorMessage.FEEDBACK_ALREADY_IN_PROGRESS: 409,
 
     # 422 Unprocessable Entity
     ErrorMessage.AUDIO_UNPROCESSABLE: 422,
@@ -48,9 +70,13 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     # 500 Internal Server Error
     ErrorMessage.STT_CONVERSION_FAILED: 500,
     ErrorMessage.FEEDBACK_GENERATION_FAILED: 500,
+    ErrorMessage.RUBRIC_EVALUATION_FAILED: 500,
+    ErrorMessage.INTERNAL_SERVER_ERROR: 500,
 
     # 502 Bad Gateway
     ErrorMessage.STT_SERVICE_UNAVAILABLE: 502,
+    ErrorMessage.LLM_SERVICE_UNAVAILABLE: 502,
+    ErrorMessage.LLM_RESPONSE_PARSE_FAILED: 502,
 
     # 503 Service Unavailable
     ErrorMessage.SERVICE_TEMPORARILY_UNAVAILABLE: 503,
