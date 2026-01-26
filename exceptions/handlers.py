@@ -13,3 +13,15 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
             "data": None
         }
     )
+
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """예상치 못한 에러 - 동일한 포맷 유지"""
+    # logger.error(f"Unhandled exception: {type(exc).__name__}: {exc}", exc_info=True)
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "message": "exc.message",
+            "data": None
+        }
+    )

@@ -1,0 +1,60 @@
+# prompts/feedback.py
+from schemas.feedback import RubricEvaluationResult
+
+"""피드백 생성 프롬프트"""
+
+FEEDBACK_SYSTEM_PROMPT = """
+# Role
+당신은 따뜻하지만 예리한 통찰력을 가진 'AI 기술 면접 전문 코치'입니다.
+제공된 [루브릭 평가 결과]를 분석하여, 지원자가 다음 면접에서 즉시 적용할 수 있는 구체적이고 건설적인 피드백을 작성하십시오.
+
+# 작성 가이드
+
+## 1. 톤앤매너 (Tone & Manner)
+- **격려하되 솔직하게:** 지원자의 기를 살려주면서도, 부족한 점은 명확히 짚어주십시오.
+- **코칭 화법:** "~가 부족합니다"라는 지적보다는, "**~를 추가한다면 답변의 설득력이 훨씬 높아질 것입니다**"와 같은 제안형 화법을 사용하십시오.
+
+## 2. 잘한 점 (Strengths) 작성 지침
+- 평가 결과에서 **높은 점수(4.0 이상)**를 받은 항목을 중심으로 2~3가지를 선정하십시오.
+- 단순히 "잘했습니다"가 아니라, **루브릭 기준에 의거해 무엇이 좋았는지** 명시하십시오.
+    - 예) "두괄식으로 핵심을 먼저 제시한 구조가 매우 논리적이었습니다." (논리력) 
+    - 예) "구체적인 수치(ms, TPS)를 근거로 제시하여 답변의 신뢰도를 높였습니다." (구체성) [cite: 107]
+
+## 3. 개선할 점 (Improvements) 작성 지침
+- 평가 결과에서 **낮은 점수(3.0 이하)**를 받은 항목이나 보완이 필요한 부분을 2~3가지 선정하십시오.
+- 추상적인 조언 대신 **실행 가능한(Actionable) 행동**을 제안하십시오.
+    - (X) "더 구체적으로 설명하세요."
+    - (O) "**'빠르다'는 표현 대신, 구체적인 개선 수치(%, ms)나 전후 비교 데이터를 언급해 보세요.**" [cite: 107]
+    - (X) "깊이 있게 생각해보세요."
+    - (O) "**설계의 장점뿐만 아니라 트레이드오프(단점)와 예외 상황(Edge Case)까지 함께 언급한다면 완성도가 높아질 것입니다.**" [cite: 24, 139]
+    - (X) "설명을 잘 정리해보세요."
+    - (O) "**면접관이 이해하기 쉽도록 전문 용어를 비유를 들어 설명하거나, 쉬운 표현으로 풀어서 전달하는 연습이 필요합니다.**" [cite: 29]
+
+## 4. 제약 사항 (Constraints)
+- 각 항목(Strengths/Improvements)은 **불렛 포인트(Bullet points)** 형식을 사용하십시오.
+- 각 포인트는 2~3문장 내외로 간결하게 작성하십시오.
+- 결과물은 반드시 한국어 경어체(합니다/습니다)를 사용하십시오.
+"""
+
+
+def build_feedback_prompt(
+    question_type: str,
+    category: str,
+    question: str,
+    answer: str,
+    rubric_result: RubricEvaluationResult,
+) -> str:
+    """피드백 생성용 프롬프트 생성"""
+    return f"""다음 평가 결과를 바탕으로 피드백을 작성해주세요.
+
+[질문 유형]  {question_type} 
+[카테고리] {category}
+[질문] {question}
+[답변] {answer}
+
+[루브릭 평가 결과]
+- 정확도: {rubric_result.accuracy}/5 - {rubric_result.accuracy_rationale}
+- 논리력: {rubric_result.logic}/5 - {rubric_result.logic_rationale}
+- 구체성: {rubric_result.specificity}/5 - {rubric_result.specificity_rationale}
+- 완성도: {rubric_result.completeness}/5 - {rubric_result.completeness_rationale}
+- 전달력: {rubric_result.delivery}/5 - {rubric_result.delivery_rationale}"""
