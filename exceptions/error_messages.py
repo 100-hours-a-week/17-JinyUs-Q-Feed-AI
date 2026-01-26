@@ -18,7 +18,8 @@ class ErrorMessage(str, Enum):
 
     #S3 관련
     S3_ACCESS_FORBIDDEN = "s3_access_forbidden"
-    AUDIO_ACCESS_FAILED = "audio_access_failed"
+    AUDIO_DOWNLOAD_FAILED = "audio_download_failed"
+    AUDIO_DOWNLOAD_TIMEOUT = "audio_download_timeout"
 
     # Feedback 관련
     EMPTY_QUESTION = "empty_question"
@@ -57,7 +58,7 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
 
     # 403 Forbidden
     ErrorMessage.S3_ACCESS_FORBIDDEN: 403,
-    ErrorMessage.AUDIO_ACCESS_FAILED: 403,
+    ErrorMessage.AUDIO_DOWNLOAD_FAILED: 403,
 
 
     # 404 Not Found
@@ -65,6 +66,7 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     ErrorMessage.SESSION_NOT_FOUND: 404,
 
     # 408 Request Timeout
+    ErrorMessage.AUDIO_DOWNLOAD_TIMEOUT: 408,
     ErrorMessage.STT_TIMEOUT: 408,
     ErrorMessage.LLM_TIMEOUT: 408,
 
