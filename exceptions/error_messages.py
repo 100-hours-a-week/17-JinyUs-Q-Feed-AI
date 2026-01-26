@@ -32,6 +32,7 @@ class ErrorMessage(str, Enum):
     LLM_TIMEOUT = "llm_timeout"
 
     # 공통
+    API_KEY_INVALID = "api_key_invalid"
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
     INTERNAL_SERVER_ERROR = "internal_server_error"
     SERVICE_TEMPORARILY_UNAVAILABLE = "service_temporarily_unavailable"
@@ -72,6 +73,7 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     ErrorMessage.FEEDBACK_GENERATION_FAILED: 500,
     ErrorMessage.RUBRIC_EVALUATION_FAILED: 500,
     ErrorMessage.INTERNAL_SERVER_ERROR: 500,
+    ErrorMessage.API_KEY_INVALID: 500,
 
     # 502 Bad Gateway
     ErrorMessage.STT_SERVICE_UNAVAILABLE: 502,

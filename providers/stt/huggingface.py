@@ -1,6 +1,8 @@
 import httpx
 from pathlib import Path
-from core.config import settings
+from core.config import get_settings
+
+settings = get_settings()
 
 API_URL = "https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3-turbo"
 headers = {

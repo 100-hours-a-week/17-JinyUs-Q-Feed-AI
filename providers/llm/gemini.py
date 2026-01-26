@@ -7,12 +7,13 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel
 
-from core.config import settings
+from core.config import get_settings
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 
 
 T = TypeVar("T", bound=BaseModel)
+settings = get_settings()
 
 
 class GeminiProvider:

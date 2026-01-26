@@ -2,16 +2,16 @@
 from typing import Callable, Awaitable
 import httpx
 
-from core.config import settings
-from exceptions.error_messages import ErrorMessage
+from core.config import get_settings
 from exceptions.exceptions import AppException
-
-from providers.stt.huggingface import transcribe
+from exceptions.error_messages import ErrorMessage
+from qfeed.providers.stt.huggingface import transcribe
 # from services.providers.stt.runpod import transcribe as runpod_transcribe   
 
 MAX_SIZE = 10 * 1024 * 1024  # 10 MB
 # Provider 함수 타입
 TranscribeFunc = Callable[[str], Awaitable[str]]
+settings = get_settings()
 
 def get_stt_provider() -> TranscribeFunc:
      """설정에 따라 STT provider 반환 - gpu 인스턴스 장애 시 huggingface로 전환 가능"""

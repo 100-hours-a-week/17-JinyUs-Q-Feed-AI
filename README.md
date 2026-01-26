@@ -18,8 +18,16 @@ uv sync
 
 ### 2. 서버 실행
 
+로컬 실행
+
 ```bash
 uv run uvicorn main:app --reload
+```
+
+프로덕션 실행
+
+```bash
+ENVIRONMENT=production uv run uvicorn main:app
 ```
 
 ### 3. 테스트 실행
@@ -45,10 +53,6 @@ uv run ruff format --check .
 
 ## 파일 구조
 
-'''
-tree -I "node_modules|.git|**pycache**|audio_data"
-'''
-
-```
-
+```bash
+tree -I "node_modules|.git|**pycache**|audio_data|__pycache__|jupyter"
 ```
