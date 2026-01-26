@@ -16,6 +16,10 @@ class ErrorMessage(str, Enum):
     STT_CONVERSION_FAILED = "stt_conversion_failed"
     STT_SERVICE_UNAVAILABLE = "stt_service_unavailable"
 
+    #S3 관련
+    S3_ACCESS_FORBIDDEN = "s3_access_forbidden"
+    AUDIO_ACCESS_FAILED = "audio_access_failed"
+
     # Feedback 관련
     EMPTY_QUESTION = "empty_question"
     EMPTY_ANSWER = "empty_answer"
@@ -50,6 +54,11 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     ErrorMessage.ANSWER_TOO_SHORT: 400,
     ErrorMessage.ANSWER_TOO_LONG: 400,
     ErrorMessage.INVALID_ANSWER_FORMAT: 400,
+
+    # 403 Forbidden
+    ErrorMessage.S3_ACCESS_FORBIDDEN: 403,
+    ErrorMessage.AUDIO_ACCESS_FAILED: 403,
+
 
     # 404 Not Found
     ErrorMessage.AUDIO_NOT_FOUND: 404,

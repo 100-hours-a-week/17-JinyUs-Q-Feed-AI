@@ -25,11 +25,19 @@ async def get_file_size(url: str) -> int:
     """S3 오디오 파일 유무 및 크기 조회"""
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.head(url)
-            
+            response = await client.get(url)
+            print(response)
+            ## 
             if response.status_code == 200:
                 return int(response.headers.get("content-length", 0))
-            return None  # 404, 403, 400 등 모두 None
+            # 상태 코드별로 구체적인 에러 발생
+            
+            elif response.status_code == 403:
+                raise AppException(ErrorMessage.S3_ACCESS_FORBIDDEN)
+            elif response.status_code == 404:
+                raise AppException(ErrorMessage.AUDIO_NOT_FOUND)
+            else:
+                raise AppException(ErrorMessage.AUDIO_ACCESS_FAILED)
         
     except httpx.RequestError:
         return None
