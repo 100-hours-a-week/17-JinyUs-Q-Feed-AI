@@ -1,7 +1,11 @@
 # core/config.py
 from pydantic_settings import BaseSettings
+from functools import lru_cache
+from utils.ssm_loader import get_ssm_loader
 
 class Settings(BaseSettings):
+    environment: str = "local"  # local | production
+
     stt_provider: str = "huggingface"  # or "runpod"
 
     #v1 : HuggingFace
@@ -28,4 +32,23 @@ class Settings(BaseSettings):
     
     model_config = {"env_file": ".env"}
 
-settings = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    """환경에 따라 설정 로드"""
+    settings = Settings()
+    print(f"=== ENVIRONMENT: {settings.environment} ===") 
+    if settings.environment == "production":
+        loader = get_ssm_loader()
+        
+        # SSM에서 시크릿 로드
+        ssm_mappings = {
+            "huggingface_api_key": "/ai/hf/api-key",
+            "gemini_api_key": "/ai/gemini/api-key",
+        }
+        
+        for field, ssm_path in ssm_mappings.items():
+            value = loader.get_parameter(ssm_path, required=False)
+            if value:
+                object.__setattr__(settings, field, value)
+    
+    return settings
