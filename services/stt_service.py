@@ -5,7 +5,7 @@ import httpx
 from core.config import get_settings
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
-from qfeed.providers.stt.huggingface import transcribe
+from providers.stt.huggingface import transcribe
 # from services.providers.stt.runpod import transcribe as runpod_transcribe   
 
 MAX_SIZE = 10 * 1024 * 1024  # 10 MB
