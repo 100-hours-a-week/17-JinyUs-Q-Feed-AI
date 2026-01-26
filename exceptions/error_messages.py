@@ -5,12 +5,7 @@ from enum import Enum
 class ErrorMessage(str, Enum):
     """API 에러 메시지 (응답 body의 message 필드로 전송)"""
     # STT 관련
-    AUDIO_TOO_LONG = "audio_too_long"
-    AUDIO_TOO_LARGE = "audio_too_large"
-    AUDIO_EMPTY = "audio_empty"
-    INVALID_AUDIO_FORMAT = "invalid_audio_format"
     AUDIO_NOT_FOUND = "audio_not_found"
-    SESSION_NOT_FOUND = "session_not_found"
     STT_TIMEOUT = "stt_timeout"
     AUDIO_UNPROCESSABLE = "audio_unprocessable" 
     STT_CONVERSION_FAILED = "stt_conversion_failed"
@@ -18,7 +13,8 @@ class ErrorMessage(str, Enum):
 
     #S3 관련
     S3_ACCESS_FORBIDDEN = "s3_access_forbidden"
-    AUDIO_ACCESS_FAILED = "audio_access_failed"
+    AUDIO_DOWNLOAD_FAILED = "audio_download_failed"
+    AUDIO_DOWNLOAD_TIMEOUT = "audio_download_timeout"
 
     # Feedback 관련
     EMPTY_QUESTION = "empty_question"
@@ -45,10 +41,6 @@ class ErrorMessage(str, Enum):
 # HTTP status code 매핑
 ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     # 400 Bad Request
-    ErrorMessage.AUDIO_TOO_LONG: 400,
-    ErrorMessage.AUDIO_TOO_LARGE: 400,
-    ErrorMessage.AUDIO_EMPTY: 400,
-    ErrorMessage.INVALID_AUDIO_FORMAT: 400,
     ErrorMessage.EMPTY_QUESTION: 400,
     ErrorMessage.EMPTY_ANSWER: 400,
     ErrorMessage.ANSWER_TOO_SHORT: 400,
@@ -57,14 +49,14 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
 
     # 403 Forbidden
     ErrorMessage.S3_ACCESS_FORBIDDEN: 403,
-    ErrorMessage.AUDIO_ACCESS_FAILED: 403,
+    ErrorMessage.AUDIO_DOWNLOAD_FAILED: 403,
 
 
     # 404 Not Found
     ErrorMessage.AUDIO_NOT_FOUND: 404,
-    ErrorMessage.SESSION_NOT_FOUND: 404,
 
     # 408 Request Timeout
+    ErrorMessage.AUDIO_DOWNLOAD_TIMEOUT: 408,
     ErrorMessage.STT_TIMEOUT: 408,
     ErrorMessage.LLM_TIMEOUT: 408,
 
