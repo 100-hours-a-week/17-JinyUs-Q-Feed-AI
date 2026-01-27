@@ -13,7 +13,9 @@ from providers.llm.gemini import GeminiProvider
 from services.answer_analyzer import AnswerAnalyzerService
 from prompts.feedback import build_feedback_prompt, FEEDBACK_SYSTEM_PROMPT
 from prompts.rubric import build_rubric_prompt, RUBRIC_SYSTEM_PROMPT
+from core.logging import get_logger, log_execution_time
 
+logger = get_logger(__name__)
 
 class FeedbackService:
     """피드백 생성 서비스"""
@@ -26,12 +28,20 @@ class FeedbackService:
         self.llm = llm_provider or GeminiProvider()
         self.analyzer = analyzer or AnswerAnalyzerService(llm_provider=self.llm)
 
+    @log_execution_time(logger)
     async def generate_feedback(
         self,
         request: FeedbackRequest,
         analysis: AnswerAnalyzerResult | None = None,
     ) -> FeedbackResponse:
         """피드백 생성 파이프라인"""
+
+        logger.info(
+            f"피드백 생성 시작 | user_id={request.user_id} | "
+            f"question_id={request.question_id} | interview_type={request.interview_type.value} | "
+            f"question_type={request.question_type.value} | category={request.category.value} "
+        )
+
         # Step 1: 답변 분석 (전달받지 않은 경우에만 수행)
         if analysis is None:
             analysis = await self.analyzer.analyze(request)
@@ -49,8 +59,10 @@ class FeedbackService:
             rubric_result=rubric_result,
         )
 
+        logger.info("피드백 생성 완료 ")
+
         return FeedbackResponse(
-            message="success",
+            message="generate_feedback_success",
             data=FeedbackData(
                 user_id=request.user_id,
                 question_id=request.question_id,
@@ -78,10 +90,16 @@ class FeedbackService:
                 feedback=None
             )
         )
-
+    
+    @log_execution_time(logger)
     async def _evaluate_rubrics(self, request: FeedbackRequest) -> RubricEvaluationResult:
         """루브릭 기반 평가"""
-        return await self.llm.generate_structured(
+        logger.info(f"루브릭 평가 시작 | user_id={request.user_id} | "
+            f"question_id={request.question_id} | interview_type={request.interview_type.value} | "
+            f"question_type={request.question_type.value} | category={request.category.value} "
+        )   
+
+        result = await self.llm.generate_structured(
             prompt=build_rubric_prompt(
                 question_type=request.question_type.value,
                 category=request.category.value,
@@ -93,14 +111,20 @@ class FeedbackService:
             temperature=0.0,
             max_tokens=4000
         )
+        
+        logger.info(f"루브릭 평가 완료 | scores={result.to_metrics_list()}")
+        return result
 
+    @log_execution_time(logger)
     async def _generate_feedback_content(
         self,
         request: FeedbackRequest,
         rubric_result: RubricEvaluationResult,
     ) -> FeedbackContent:
         """피드백 텍스트 생성"""
-        return await self.llm.generate_structured(
+        logger.info("피드백 텍스트 생성 시작 | user_id={request.user_id} | question_id={request.question_id}")
+        
+        result = await self.llm.generate_structured(
             prompt=build_feedback_prompt(
                 question_type=request.question_type.value,
                 category=request.category.value,
@@ -113,6 +137,12 @@ class FeedbackService:
             temperature=0.3,
             max_tokens=4000,
         )
+        
+        strengths_count = len(result.strengths) if result.strengths else 0
+        improvements_count = len(result.improvements) if result.improvements else 0
+        logger.info(f"피드백 텍스트 생성 완료 | strengths={strengths_count} | improvements={improvements_count}")
+        return result
+
 
 
 # 싱글톤 인스턴스
