@@ -4,6 +4,9 @@ from functools import lru_cache
 from botocore.exceptions import ClientError
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
+from core.logging import get_logger
+
+logger = get_logger(__name__)
 
 class SSMConfigLoader:
     """AWS Parameter Store 기반 설정 로더"""
@@ -11,6 +14,7 @@ class SSMConfigLoader:
     def __init__(self, region: str = 'ap-northeast-2'):
         self._client = boto3.client('ssm', region_name=region)
         self._cache: dict[str, str] = {}
+        logger.debug(f"SSMConfigLoader 초기화 | region={region}")
     
     def get_parameter(
         self, 
@@ -22,6 +26,7 @@ class SSMConfigLoader:
         
         # 캐시 확인
         if ssm_path in self._cache:
+            logger.debug(f"SSM 캐시 히트 | path={ssm_path}")
             return self._cache[ssm_path]
         
         # SSM 시도
@@ -32,9 +37,12 @@ class SSMConfigLoader:
             )
             value = response['Parameter']['Value']
             self._cache[ssm_path] = value
+            logger.info(f"SSM 파라미터 로드 성공 | path={ssm_path}")
             return value
-        except ClientError:
-            raise  AppException(ErrorMessage.API_KEY_INVALID)
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            logger.error(f"SSM 파라미터 로드 실패 | path={ssm_path} | error={error_code}")
+            raise AppException(ErrorMessage.API_KEY_INVALID)
         
         # # Fallback: 환경변수
         # if env_fallback:
