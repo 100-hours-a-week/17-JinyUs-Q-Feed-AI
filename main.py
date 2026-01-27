@@ -3,7 +3,6 @@ from routers import stt,feedback
 from exceptions.handlers import app_exception_handler, global_exception_handler
 from exceptions.exceptions import AppException
 from core.config import get_settings
-from core.logging import setup_logging
 from core.logging import setup_logging, TraceIdMiddleware
 
 

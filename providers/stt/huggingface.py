@@ -27,16 +27,16 @@ CONTENT_TYPE_MAP = {
 @log_execution_time(logger)
 async def download_audio(url: str) -> bytes:
     """오디오 다운로드"""
-    logger.debug(f"오디오 다운로드 시작")
+    logger.debug("오디오 다운로드 시작")
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(url)
             
             if response.status_code == 404:
-                logger.warning(f"오디오 파일 없음 | status=404")
+                logger.warning("오디오 파일 없음 | status=404")
                 raise AppException(ErrorMessage.AUDIO_NOT_FOUND)
             elif response.status_code == 403:
-                logger.warning(f"S3 접근 거부 | status=403")
+                logger.warning("S3 접근 거부 | status=403")
                 raise AppException(ErrorMessage.S3_ACCESS_FORBIDDEN)
             
             response.raise_for_status()
@@ -49,10 +49,10 @@ async def download_audio(url: str) -> bytes:
         raise  # 우리가 던진 건 그대로 전파
     except httpx.TimeoutException:
         raise AppException(ErrorMessage.AUDIO_DOWNLOAD_TIMEOUT)
-    except httpx.RequestError as e:
-        logger.error(f"오디오 다운로드 실패 |{type(e).__name__}: {e}")
+    except httpx.RequestError as re:
+        logger.error(f"오디오 다운로드 실패 |{type(re).__name__}: {re}")
         raise AppException(ErrorMessage.AUDIO_DOWNLOAD_FAILED)
-    except Exception:
+    except Exception as e:
         # 예상치 못한 에러
         logger.error(f"오디오 다운로드 예외 |{type(e).__name__}: {e}")
         raise AppException(ErrorMessage.AUDIO_DOWNLOAD_FAILED)
@@ -73,7 +73,7 @@ async def transcribe(audio_url: str) -> str:
     audio_data = await download_audio(audio_url)
     audio_size_kb = len(audio_data) / 1024
 
-    logger.debug(f"Huggingface API 호출 시작 | model=whisper-large-v3-turbo")
+    logger.debug("Huggingface API 호출 시작 | model=whisper-large-v3-turbo")
     api_start = time.perf_counter()
     # Huggingface API 호출
     try:
@@ -98,14 +98,14 @@ async def transcribe(audio_url: str) -> str:
             
             return text
     except httpx.TimeoutException:
-        logger.error(f"Huggingface API 타임아웃 ")
+        logger.error("Huggingface API 타임아웃 ")
         raise AppException(ErrorMessage.STT_TIMEOUT)
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 401:
-            logger.warning(f"Huggingface API 인증 실패")
+            logger.warning("Huggingface API 인증 실패")
             raise AppException(ErrorMessage.API_KEY_INVALID)
         if e.response.status_code == 429:
-            logger.warning(f"Huggingface Rate Limit 초과")
+            logger.warning("Huggingface Rate Limit 초과")
             raise AppException(ErrorMessage.RATE_LIMIT_EXCEEDED)
         raise AppException(ErrorMessage.STT_CONVERSION_FAILED)
         
