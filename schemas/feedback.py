@@ -15,7 +15,7 @@ class QuestionCategory(str, Enum):
     OS = "OS"
     NETWORK = "NETWORK"
     DB = "DB"
-    DATA_STRUCTURE_ALGORITHM = "DATA_STRUCTURE/ALGORITHM"
+    DATA_STRUCTURE_ALGORITHM = "DATA_STRUCTURE_ALGORITHM"
     COMPUTER_ARCHITECTURE = "COMPUTER_ARCHITECTURE"
 
     #----------------------------- 시스템 디자인 카테고리 ----------------------------#
