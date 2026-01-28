@@ -17,10 +17,10 @@ headers = {
     "Authorization": f"Bearer {settings.huggingface_api_key}",
 }
 
-# S3 테스트 후 삭제해도됨
 CONTENT_TYPE_MAP = {
     ".mp3": "audio/mpeg",
-    ".mp4": "audio/mp4",
+    ".mp4": "audio/x-m4a",
+    ".m4a": "audio/x-m4a",
 }
 
 
@@ -73,8 +73,9 @@ async def transcribe(audio_url: str) -> str:
     audio_data = await download_audio(audio_url)
     audio_size_kb = len(audio_data) / 1024
 
-    logger.debug("Huggingface API 호출 시작 | model=whisper-large-v3-turbo")
+    logger.debug("Huggingface API 호출 시작 | model=whisper-large-v3-turbo | content_type={content_type} | audio_size={audio_size_kb:.1f}KB")
     api_start = time.perf_counter()
+
     # Huggingface API 호출
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:

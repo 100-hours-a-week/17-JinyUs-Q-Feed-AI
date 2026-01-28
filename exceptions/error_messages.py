@@ -47,6 +47,8 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     ErrorMessage.ANSWER_TOO_LONG: 400,
     ErrorMessage.INVALID_ANSWER_FORMAT: 400,
 
+    ErrorMessage.API_KEY_INVALID: 401,
+
     # 403 Forbidden
     ErrorMessage.S3_ACCESS_FORBIDDEN: 403,
     ErrorMessage.AUDIO_DOWNLOAD_FAILED: 403,
@@ -74,7 +76,7 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     ErrorMessage.FEEDBACK_GENERATION_FAILED: 500,
     ErrorMessage.RUBRIC_EVALUATION_FAILED: 500,
     ErrorMessage.INTERNAL_SERVER_ERROR: 500,
-    ErrorMessage.API_KEY_INVALID: 500,
+    
 
     # 502 Bad Gateway
     ErrorMessage.STT_SERVICE_UNAVAILABLE: 502,
