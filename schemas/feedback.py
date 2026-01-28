@@ -15,8 +15,8 @@ class QuestionCategory(str, Enum):
     OS = "OS"
     NETWORK = "NETWORK"
     DB = "DB"
-    ALGORITHM_DATA_STRUCTURE = "ALGORITHM/DATA_STRUCTURE"
-    COMPUTER_STRUCTURE = "COMPUTER_STRUCTURE"
+    DATA_STRUCTURE_ALGORITHM = "DATA_STRUCTURE/ALGORITHM"
+    COMPUTER_ARCHITECTURE = "COMPUTER_ARCHITECTURE"
 
     #----------------------------- 시스템 디자인 카테고리 ----------------------------#
     NOTIFICATION_ENGAGEMENT = "NOTIFICATION/ENGAGEMENT"
@@ -150,10 +150,10 @@ class FeedbackData(BaseModel):
     # Bad case 응답 (bad_case일 때만 사용)
     bad_case_feedback: BadCaseFeedback | None = None
     
-    # 정상 응답 (bad_case가 아닐 때만 사용)
-    metrics: list[RubricScore] | None = None
-    weakness: bool | None = None
-    feedback: FeedbackContent | None = None
+    # 정상 응답 (필수이지만 null일 수 있음)
+    metrics: list[RubricScore] | None 
+    weakness: bool | None 
+    feedback: FeedbackContent | None 
 
 
 class FeedbackResponse(BaseResponse):

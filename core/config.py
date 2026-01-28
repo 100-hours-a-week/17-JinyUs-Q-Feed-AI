@@ -52,8 +52,8 @@ def get_settings() -> Settings:
         
         # SSM에서 시크릿 로드
         ssm_mappings = {
-            "huggingface_api_key": "/ai/hf/api-key",
-            "gemini_api_key": "/ai/gemini/api-key",
+            "huggingface_api_key": "/qfeed/prod/ai/huggingface-api-key",
+            "gemini_api_key": "/qfeed/prod/ai/gemini-api-key",
         }
         
         for field, ssm_path in ssm_mappings.items():
