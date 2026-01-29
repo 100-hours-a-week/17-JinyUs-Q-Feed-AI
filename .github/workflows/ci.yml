@@ -174,23 +174,6 @@ jobs:
             ai-${{ steps.package-version.outputs.version }}.tar.gz \
             ${{ secrets.QFEED_EC2_USER }}@${{ secrets.QFEED_EC2_HOST }}:/tmp/
 
-      - name: deploy-ai.sh 업로드 및 배치
-        timeout-minutes: 2
-        run: |
-          scp -i ~/.ssh/deploy_key \
-            -o StrictHostKeyChecking=no \
-            -o ConnectTimeout=60 \
-            -o ServerAliveInterval=10 \
-            -o ServerAliveCountMax=3 \
-            scripts/deploy-ai.sh \
-            ${{ secrets.QFEED_EC2_USER }}@${{ secrets.QFEED_EC2_HOST }}:/tmp/deploy-ai.sh
-          ssh -i ~/.ssh/deploy_key \
-            -o StrictHostKeyChecking=no \
-            -o ConnectTimeout=30 \
-            -o ServerAliveInterval=10 \
-            ${{ secrets.QFEED_EC2_USER }}@${{ secrets.QFEED_EC2_HOST }} \
-            "sudo mv /tmp/deploy-ai.sh /srv/qfeed/deploy-ai.sh && sudo chmod +x /srv/qfeed/deploy-ai.sh"
-
       - name: 서버에서 배포 실행 (deploy-ai.sh)
         timeout-minutes: 5
         uses: appleboy/ssh-action@v1.0.3

@@ -61,6 +61,21 @@ rsync -av --delete \
 
 echo "Deploy complete: $APP_DIR"
 
+# Ensure required runtime deps exist in the preserved venv.
+# (We preserve `.venv` during deploy, so newly-added deps may be missing.)
+VENV_PY="$APP_DIR/.venv/bin/python"
+if [[ -x "$VENV_PY" ]]; then
+  if ! "$VENV_PY" -c "import pydantic_settings" >/dev/null 2>&1; then
+    echo "Missing dependency detected: pydantic-settings. Installing into .venv..."
+    # Some environments were created without pip; bootstrap it first.
+    "$VENV_PY" -m ensurepip --upgrade >/dev/null 2>&1 || true
+    "$VENV_PY" -m pip install -U pip >/dev/null
+    "$VENV_PY" -m pip install -U pydantic-settings
+  fi
+else
+  echo "Warning: venv python not found at $VENV_PY (skipping dependency check)" >&2
+fi
+
 # Restart the AI service
 if systemctl is-enabled --quiet "$SERVICE_NAME" 2>/dev/null; then
   echo "Restarting $SERVICE_NAME..."
