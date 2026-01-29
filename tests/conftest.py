@@ -20,7 +20,6 @@ from contextlib import contextmanager
 from fastapi.testclient import TestClient
 
 from main import app
-from schemas.stt import STTRequest
 from schemas.feedback import (
     FeedbackRequest,
     InterviewType,

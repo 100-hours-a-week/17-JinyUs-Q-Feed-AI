@@ -87,7 +87,7 @@ class TestSTTE2ESuccess:
         assert text is not None
         assert len(text.strip()) > 0, "변환된 텍스트가 비어있음"
         
-        print(f"\n[STT 변환 결과]")
+        print("\n[STT 변환 결과]")
         print(f"텍스트 길이: {len(text)}자")
         print(f"변환 결과: {text[:200]}{'...' if len(text) > 200 else ''}")
 
@@ -111,7 +111,7 @@ class TestSTTE2ESuccess:
         assert data["message"] == "speech_to_text_success"
         assert data["data"]["session_id"] is None
         
-        print(f"\n[session_id 없이 STT 변환 성공]")
+        print("\n[session_id 없이 STT 변환 성공]")
         print(f"텍스트: {data['data']['text'][:100]}...")
 
 
@@ -185,6 +185,6 @@ class TestSTTE2EErrorCases:
         assert response.status_code in [404, 403, 500, 502]
         
         data = response.json()
-        print(f"\n[존재하지 않는 파일 에러]")
+        print("\n[존재하지 않는 파일 에러]")
         print(f"status: {response.status_code}")
         print(f"message: {data.get('message', 'N/A')}")

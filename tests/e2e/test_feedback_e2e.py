@@ -45,7 +45,7 @@ class TestFeedbackE2ENormalCases:
         avg_score = sum(m["score"] for m in metrics) / len(metrics)
         assert avg_score >= 2.5, f"좋은 답변인데 평균 점수가 너무 낮음: {avg_score}"
         
-        print(f"\n[좋은 답변 테스트 결과]")
+        print("\n[좋은 답변 테스트 결과]")
         print(f"평균 점수: {avg_score:.1f}")
         for m in metrics:
             print(f"  - {m['name']}: {m['score']}점")
@@ -68,7 +68,7 @@ class TestFeedbackE2ENormalCases:
         data = response.json()
         assert_successful_feedback_response(data)
         
-        print(f"\n[약점 답변 테스트 결과]")
+        print("\n[약점 답변 테스트 결과]")
         print(f"weakness: {data['data']['weakness']}")
         print(f"개선점: {data['data']['feedback']['improvements'][:100]}...")
 
@@ -96,12 +96,12 @@ class TestFeedbackE2EBadCases:
         # LLM이 REFUSE_TO_ANSWER로 판단할 것으로 기대
         if data["message"] == "bad_case_detected":
             assert_bad_case_response(data, "REFUSE_TO_ANSWER")
-            print(f"\n[답변 거부 Bad Case 감지됨]")
+            print("\n[답변 거부 Bad Case 감지됨]")
             print(f"guidance: {data['data']['bad_case_feedback']['guidance']}")
         else:
             # LLM이 bad case로 판단하지 않은 경우
             assert_successful_feedback_response(data)
-            print(f"\n[참고: LLM이 정상 답변으로 판단함]")
+            print("\n[참고: LLM이 정상 답변으로 판단함]")
 
     def test_너무_짧은_답변_bad_case(
         self,
@@ -121,11 +121,11 @@ class TestFeedbackE2EBadCases:
         data = response.json()
         if data["message"] == "bad_case_detected":
             assert data["data"]["bad_case_feedback"] is not None
-            print(f"\n[짧은 답변 Bad Case 감지됨]")
+            print("\n[짧은 답변 Bad Case 감지됨]")
             print(f"type: {data['data']['bad_case_feedback']['type']}")
         else:
             assert_successful_feedback_response(data)
-            print(f"\n[참고: LLM이 정상 답변으로 판단함]")
+            print("\n[참고: LLM이 정상 답변으로 판단함]")
 
 
 @pytest.mark.e2e
@@ -148,7 +148,7 @@ class TestFeedbackE2ECategories:
         data = response.json()
         assert_successful_feedback_response(data)
         
-        print(f"\n[OS 카테고리 테스트 결과]")
+        print("\n[OS 카테고리 테스트 결과]")
         print(f"질문: {os_category_request['question'][:50]}...")
         metrics = data["data"]["metrics"]
         for m in metrics:
@@ -170,7 +170,7 @@ class TestFeedbackE2ECategories:
         data = response.json()
         assert_successful_feedback_response(data)
         
-        print(f"\n[DB 카테고리 테스트 결과]")
+        print("\n[DB 카테고리 테스트 결과]")
         print(f"질문: {db_category_request['question'][:50]}...")
         metrics = data["data"]["metrics"]
         for m in metrics:
@@ -205,7 +205,7 @@ class TestFeedbackE2EResponseQuality:
         assert len(feedback["strengths"]) >= 20, "strengths가 너무 짧음"
         assert len(feedback["improvements"]) >= 20, "improvements가 너무 짧음"
         
-        print(f"\n[피드백 품질 테스트]")
+        print("\n[피드백 품질 테스트]")
         print(f"strengths 길이: {len(feedback['strengths'])}자")
         print(f"improvements 길이: {len(feedback['improvements'])}자")
         print(f"\nstrengths: {feedback['strengths'][:200]}...")
@@ -229,7 +229,7 @@ class TestFeedbackE2EResponseQuality:
         
         metrics = data["data"]["metrics"]
         
-        print(f"\n[루브릭 코멘트 품질 테스트]")
+        print("\n[루브릭 코멘트 품질 테스트]")
         for m in metrics:
             # 각 코멘트가 최소 10자 이상
             assert len(m["comment"]) >= 10, f"{m['name']} 코멘트가 너무 짧음"

@@ -9,7 +9,6 @@ Feedback API Integration Tests
 
 from unittest.mock import AsyncMock
 from services.feedback_service import feedback_service
-from schemas.feedback import RubricEvaluationResult, FeedbackResult 
 
 class TestFeedbackAPISuccess:
     """Feedback API 성공 케이스 통합 테스트"""
