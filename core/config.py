@@ -5,27 +5,27 @@ from functools import lru_cache
 from utils.ssm_loader import get_ssm_loader
 
 class Settings(BaseSettings):
-    environment: str = "local"  # local | production
+    ENVIRONMENT: str = "local"  # local | production
 
     # 로그 설정 추가
-    log_dir: str = "./logs"
+    LOG_DIR: str = "./logs"
 
     @property
     def log_directory(self) -> str:
-        if self.log_dir:
-            return self.log_dir
+        if self.LOG_DIR:
+            return self.LOG_DIR
         # 환경별 기본값 설정 -> ec2 서버 log 경로 확정되면 수정할 것
-        return "./logs" if self.environment == "local" else "/var/log/qfeed/ai"
+        return "./logs" if self.ENVIRONMENT == "local" else "/var/log/qfeed/ai"
 
-    stt_provider: str = "huggingface"  # or "runpod"
+    STT_PROVIDER: str = "huggingface"  # or "runpod"
 
     #v1 : HuggingFace
-    huggingface_api_key: str
-    huggingface_model_id: str = "openai/whisper-large-v3-turbo"
+    HUGGINGFACE_API_KEY: str
+    HUGGINGFACE_MODEL_ID: str = "openai/whisper-large-v3-turbo"
 
     # gemini
-    gemini_api_key: str
-    gemini_model_id: str = "gemini-2.5-pro"
+    GEMINI_API_KEY: str
+    GEMINI_MODEL_ID: str = "gemini-2.5-pro"
 
     # AWS S3 설정
     AWS_ACCESS_KEY_ID: str | None = None
@@ -41,7 +41,10 @@ class Settings(BaseSettings):
 
     #v3 : RunPod
     
-    model_config = {"env_file": ".env"}
+    model_config = {
+        "env_file": ".env",
+        "extra": "ignore",  # 정의되지 않은 환경변수 무시 (E2E 테스트용 등)
+    }
 
 @lru_cache
 def get_settings() -> Settings:
