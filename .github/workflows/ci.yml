@@ -79,7 +79,6 @@ jobs:
             --exclude='tests/' \
             --exclude='*.pyc' \
             --exclude='__pycache__/' \
-            --exclude='.venv*' \
             --exclude='.github/' \
             --exclude='.env*' \
             --exclude='.ruff_cache/' \
