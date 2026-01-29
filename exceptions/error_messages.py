@@ -47,6 +47,7 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     ErrorMessage.ANSWER_TOO_LONG: 400,
     ErrorMessage.INVALID_ANSWER_FORMAT: 400,
 
+    # 401 Bad Request
     ErrorMessage.API_KEY_INVALID: 401,
 
     # 403 Forbidden

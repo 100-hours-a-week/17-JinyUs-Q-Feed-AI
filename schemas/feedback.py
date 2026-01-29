@@ -158,7 +158,7 @@ class FeedbackData(BaseModel):
 
 class FeedbackResponse(BaseResponse):
     """V1 동기 피드백 응답 - AI 서버 → Java 백엔드"""
-    data: FeedbackData | None = None
+    data: FeedbackData | None
 
 class FeedbackResult(BaseModel):
     '''최종 피드백 결과 - 백엔드 Callback 전송용'''

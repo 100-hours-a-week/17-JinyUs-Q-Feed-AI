@@ -30,3 +30,22 @@ line-length = 88
 # "F": 코드 논리적 오류와 무의미한 코드 검사
 # "S": 보안 취약점 검사
 select = ["E", "F", "S"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+asyncio_mode = "auto"
+markers = [
+    "unit: 유닛 테스트",
+    "integration: 통합 테스트",
+    "e2e: E2E 테스트",
+    "slow: 느린 테스트",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# "test" 또는 "tests" 폴더 하위의 모든 파일에서는 S101 에러를 무시함
+"tests/*" = ["S101"]

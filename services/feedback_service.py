@@ -23,7 +23,7 @@ class FeedbackService:
     def __init__(
         self,
         llm_provider: GeminiProvider | None = None,
-        analyzer: AnswerAnalyzerService | None = None,
+        analyzer: AnswerAnalyzerService | None = None
     ):
         self.llm = llm_provider or GeminiProvider()
         self.analyzer = analyzer or AnswerAnalyzerService(llm_provider=self.llm)
@@ -32,7 +32,6 @@ class FeedbackService:
     async def generate_feedback(
         self,
         request: FeedbackRequest,
-        analysis: AnswerAnalyzerResult | None = None,
     ) -> FeedbackResponse:
         """피드백 생성 파이프라인"""
 
@@ -43,8 +42,7 @@ class FeedbackService:
         )
 
         # Step 1: 답변 분석 (전달받지 않은 경우에만 수행)
-        if analysis is None:
-            analysis = await self.analyzer.analyze(request)
+        analysis = await self.analyzer.analyze(request)
 
         # Bad Case인 경우 조기 반환
         if analysis.is_bad_case:
@@ -59,7 +57,7 @@ class FeedbackService:
             rubric_result=rubric_result,
         )
 
-        logger.info("피드백 생성 완료 ")
+        logger.debug("피드백 생성 완료 ")
 
         return FeedbackResponse(
             message="generate_feedback_success",
@@ -112,7 +110,7 @@ class FeedbackService:
             max_tokens=4000
         )
         
-        logger.info(f"루브릭 평가 완료 | scores={result.to_metrics_list()}")
+        logger.debug(f"루브릭 평가 완료 | scores={result.to_metrics_list()}")
         return result
 
     @log_execution_time(logger)
@@ -140,7 +138,7 @@ class FeedbackService:
         
         strengths_count = len(result.strengths) if result.strengths else 0
         improvements_count = len(result.improvements) if result.improvements else 0
-        logger.info(f"피드백 텍스트 생성 완료 | strengths={strengths_count} | improvements={improvements_count}")
+        logger.debug(f"피드백 텍스트 생성 완료 | strengths={strengths_count} | improvements={improvements_count}")
         return result
 
 

@@ -34,6 +34,7 @@ class GeminiProvider:
     async def generate(
         self,
         prompt: str,
+        response_model: Type[T],
         *,
         system_prompt: str | None = None,
         temperature: float = 0.7,
@@ -41,13 +42,14 @@ class GeminiProvider:
     ) -> str:
         """일반 텍스트 생성"""
         full_prompt = self._build_prompt(prompt, system_prompt)
+        task_name = response_model.__name__
 
         config = types.GenerateContentConfig(
             temperature=temperature,
             max_output_tokens=max_tokens,
         )
 
-        response = await self._call_api(full_prompt, config)
+        response = await self._call_api(full_prompt, task_name, config)
         return response.text
 
     async def generate_structured(
@@ -110,7 +112,7 @@ class GeminiProvider:
             elapsed_ms = (time.perf_counter() - start_time) * 1000
             response_length = len(response.text) if response.text else 0
             
-            logger.info(f"Gemini API 완료 | task={task} | {elapsed_ms:.2f}ms")
+            logger.debug(f"Gemini API 완료 | task={task} | {elapsed_ms:.2f}ms")
             
             # 메트릭 로깅
             metrics_logger.info(
