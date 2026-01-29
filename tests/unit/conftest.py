@@ -11,7 +11,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 from schemas.feedback import (
     RubricEvaluationResult,
-    FeedbackContent,
     AnswerAnalyzerResult,
     BadCaseType
 )
