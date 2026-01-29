@@ -94,26 +94,30 @@ jobs:
           name: ai-v${{ steps.version.outputs.version }}
           path: ai-${{ steps.version.outputs.version }}.tar.gz
 
-      # 서버 업로드까지 완료 시 CI 통과 알림 (Discord)
+      # CI 통과 시 Discord 알림
       - name: Discord 알림 (CI 통과)
         if: success()
         continue-on-error: true
         run: |
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "✅ AI CI 통과",
+              "description": "빌드·린트 검사·의존성 설치·아티팩트 업로드까지 완료되었습니다.",
+              "color": 3066993,
+              "fields": [
+                {"name": "브랜치", "value": "${{ github.ref_name }}", "inline": true},
+                {"name": "커밋", "value": "`${{ github.sha }}`", "inline": true},
+                {"name": "트리거", "value": "${{ github.event_name }}", "inline": true}
+              ],
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }]
+          }
+          EOF
+          )
           curl -sS -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            -d '{
-              "embeds": [{
-                "title": "✅ AI CI 통과",
-                "description": "빌드·린트 검사·의존성 설치·테스트·아티팩트 업로드 및 **서버 파일 업로드**까지 완료되었습니다.",
-                "color": 3066993,
-                "fields": [
-                  {"name": "브랜치", "value": "'"${{ github.ref_name }}"'", "inline": true},
-                  {"name": "커밋", "value": "`'"${{ github.sha }}"'`", "inline": true},
-                  {"name": "트리거", "value": "'"${{ github.event_name }}"'", "inline": true}
-                ],
-                "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"
-              }]
-            }'
+            -d "$PAYLOAD"
 
   deploy:
     name: Deploy to EC2
@@ -205,51 +209,47 @@ jobs:
   discord-notify-failure:
     name: Discord 알림 (CI 실패)
     runs-on: ubuntu-latest
-    needs: [build-and-test, deploy]
-    if: always() && (needs.build-and-test.result == 'failure' || needs.deploy.result == 'failure')
+    needs: [lint-test, deploy]
+    if: always() && (needs.lint-test.result == 'failure' || needs.deploy.result == 'failure')
     steps:
       - name: 실패한 Job/Step 조회
         id: failed
         run: |
-          RES=$(curl -sS -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs")
-          FAILED_JOB=$(echo "$RES" | jq -r '.jobs[] | select(.conclusion == "failure") | .name' | head -1)
-          FAILED_JOB_ID=$(echo "$RES" | jq -r '.jobs[] | select(.conclusion == "failure") | .id' | head -1)
-          if [ -n "$FAILED_JOB_ID" ]; then
-            STEPS_RES=$(curl -sS -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/jobs/$FAILED_JOB_ID")
-            FAILED_STEP=$(echo "$STEPS_RES" | jq -r '.steps[] | select(.conclusion == "failure") | .name' | head -1)
-          else
-            FAILED_STEP="(확인 불가)"
+          FAILED_JOB=""
+          FAILED_STEP=""
+          if [ "${{ needs.lint-test.result }}" == "failure" ]; then
+            FAILED_JOB="lint-test"
+          elif [ "${{ needs.deploy.result }}" == "failure" ]; then
+            FAILED_JOB="deploy"
           fi
-          [ -z "$FAILED_JOB" ] && FAILED_JOB="(알 수 없음)"
-          [ -z "$FAILED_STEP" ] && FAILED_STEP="(알 수 없음)"
+          if [ -z "$FAILED_JOB" ]; then
+            FAILED_JOB="(알 수 없음)"
+            FAILED_STEP="(알 수 없음)"
+          else
+            FAILED_STEP="(확인 필요)"
+          fi
           echo "job=$FAILED_JOB" >> $GITHUB_OUTPUT
           echo "step=$FAILED_STEP" >> $GITHUB_OUTPUT
 
       - name: Discord 알림 (CI 실패)
         continue-on-error: true
         run: |
-          PAYLOAD=$(jq -n \
-            --arg job "${{ steps.failed.outputs.job }}" \
-            --arg step "${{ steps.failed.outputs.step }}" \
-            --arg ref "${{ github.ref_name }}" \
-            --arg sha "${{ github.sha }}" \
-            --arg url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            '{
-              embeds: [{
-                title: "❌ AI CI 실패",
-                description: ("**실패한 Job:** " + $job + "\n**실패한 Step:** " + $step),
-                color: 15158332,
-                fields: [
-                  {name: "브랜치", value: $ref, inline: true},
-                  {name: "커밋", value: ("`" + $sha + "`"), inline: true},
-                  {name: "워크플로우", value: ("[Run 보기](" + $url + ")"), inline: false}
-                ],
-                timestamp: $ts
-              }]
-            }')
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "❌ AI CI 실패",
+              "description": "**실패한 Job:** ${{ steps.failed.outputs.job }}\n**실패한 Step:** ${{ steps.failed.outputs.step }}",
+              "color": 15158332,
+              "fields": [
+                {"name": "브랜치", "value": "${{ github.ref_name }}", "inline": true},
+                {"name": "커밋", "value": "`${{ github.sha }}`", "inline": true},
+                {"name": "워크플로우", "value": "[Run 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})", "inline": false}
+              ],
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }]
+          }
+          EOF
+          )
           curl -sS -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD"
