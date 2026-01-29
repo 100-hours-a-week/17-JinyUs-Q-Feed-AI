@@ -42,7 +42,9 @@ class SSMConfigLoader:
         except ClientError as e:
             error_code = e.response['Error']['Code']
             logger.error(f"SSM 파라미터 로드 실패 | path={ssm_path} | error={error_code}")
-            raise AppException(ErrorMessage.API_KEY_INVALID)
+            if required:
+                raise AppException(ErrorMessage.API_KEY_INVALID)
+            return None
         
         # # Fallback: 환경변수
         # if env_fallback:

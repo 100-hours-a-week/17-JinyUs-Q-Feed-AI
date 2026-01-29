@@ -45,21 +45,29 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """환경에 따라 설정 로드"""
-    settings = Settings()
-    print(f"=== ENVIRONMENT: {settings.environment} ===") 
-    if settings.environment == "production":
+    import os
+    
+    # production 환경이면 SSM에서 먼저 로드해서 환경 변수로 설정
+    # (Settings() 초기화 전에 필수 필드가 있어야 하므로)
+    environment = os.getenv("ENVIRONMENT", "local")
+    if environment == "production":
         loader = get_ssm_loader()
         
-        # SSM에서 시크릿 로드
+        # SSM에서 시크릿 로드 후 환경 변수로 설정
+        # pydantic_settings는 환경 변수 이름을 필드 이름과 매칭합니다
+        # huggingface_api_key -> HUGGINGFACE_API_KEY 또는 huggingface_api_key
         ssm_mappings = {
-            "huggingface_api_key": "/qfeed/prod/ai/huggingface-api-key",
-            "gemini_api_key": "/qfeed/prod/ai/gemini-api-key",
-            "AWS_S3_AUDIO_BUCKET": "/qfeed/prod/ai/s3-audio-bucket"
+            "HUGGINGFACE_API_KEY": "/qfeed/prod/ai/huggingface-api-key",
+            "GEMINI_API_KEY": "/qfeed/prod/ai/gemini-api-key",
+            "AWS_S3_AUDIO_BUCKET": "/qfeed/prod/ai/aws-s3-audio-bucket",
         }
         
-        for field, ssm_path in ssm_mappings.items():
-            value = loader.get_parameter(ssm_path, required=False)
-            if value:
-                object.__setattr__(settings, field, value)
+        for env_var, ssm_path in ssm_mappings.items():
+            if env_var not in os.environ:
+                value = loader.get_parameter(ssm_path, required=False)
+                if value:
+                    os.environ[env_var] = value
     
+    settings = Settings()
+    print(f"=== ENVIRONMENT: {settings.environment} ===") 
     return settings
