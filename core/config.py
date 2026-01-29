@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str | None = None
     AWS_REGION: str = "ap-northeast-2"
     # 버킷 설정 - 환경별
-    AWS_S3_AUDIO_BUCKET: str
+    AWS_S3_AUDIO_BUCKET: str | None = None
 
 
     # Callback 설정 (V2)
@@ -54,6 +54,7 @@ def get_settings() -> Settings:
         ssm_mappings = {
             "huggingface_api_key": "/qfeed/prod/ai/huggingface-api-key",
             "gemini_api_key": "/qfeed/prod/ai/gemini-api-key",
+            "AWS_S3_AUDIO_BUCKET": "/qfeed/prod/ai/s3-audio-bucket"
         }
         
         for field, ssm_path in ssm_mappings.items():
