@@ -6,4 +6,4 @@ T = TypeVar("T")
 
 class BaseResponse(BaseModel, Generic[T]):
     message: str
-    data: T | None = None
+    data: T | None

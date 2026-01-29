@@ -1,4 +1,5 @@
 # core/config.py
+import os
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from utils.ssm_loader import get_ssm_loader
@@ -45,7 +46,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """환경에 따라 설정 로드"""
-    import os
     
     # production 환경이면 SSM에서 먼저 로드해서 환경 변수로 설정
     # (Settings() 초기화 전에 필수 필드가 있어야 하므로)

@@ -23,7 +23,6 @@ CONTENT_TYPE_MAP = {
     ".m4a": "audio/x-m4a",
 }
 
-
 @log_execution_time(logger)
 async def download_audio(url: str) -> bytes:
     """오디오 다운로드"""
@@ -48,9 +47,16 @@ async def download_audio(url: str) -> bytes:
     except AppException:
         raise  # 우리가 던진 건 그대로 전파
     except httpx.TimeoutException:
+        logger.error("오디오 다운로드 타임 아웃")
         raise AppException(ErrorMessage.AUDIO_DOWNLOAD_TIMEOUT)
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code >= 500:
+            logger.error(f"서버 내부 오류 | status={e.response.status_code}")
+            raise AppException(ErrorMessage.INTERNAL_SERVER_ERROR)
+        logger.error(f"오디오 다운로드 에러 | status={e.response.status_code}")
+        raise AppException(ErrorMessage.AUDIO_DOWNLOAD_FAILED)
     except httpx.RequestError as re:
-        logger.error(f"오디오 다운로드 실패 |{type(re).__name__}: {re}")
+        logger.error(f"네트워크 연결 실패 | {type(re).__name__}: {re}")
         raise AppException(ErrorMessage.AUDIO_DOWNLOAD_FAILED)
     except Exception as e:
         # 예상치 못한 에러
@@ -102,6 +108,14 @@ async def transcribe(audio_url: str) -> str:
         logger.error("Huggingface API 타임아웃 ")
         raise AppException(ErrorMessage.STT_TIMEOUT)
     except httpx.HTTPStatusError as e:
+        error_detail = e.response.json() if e.response.content else {}
+        logger.error(
+            "HuggingFace API 400 에러 상세",
+            extra={
+                "status_code": e.response.status_code,
+                "error_detail": error_detail,
+            }
+        )
         if e.response.status_code == 401:
             logger.warning("Huggingface API 인증 실패")
             raise AppException(ErrorMessage.API_KEY_INVALID)
