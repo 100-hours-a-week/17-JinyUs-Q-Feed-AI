@@ -16,7 +16,7 @@ settings = get_settings()
 
 def get_stt_provider() -> TranscribeFunc:
     """설정에 따라 STT provider 반환 - gpu 인스턴스 장애 시 huggingface로 전환 가능"""
-    if settings.stt_provider == "huggingface":
+    if settings.STT_PROVIDER == "huggingface":
         return transcribe
     # runpod 이전 시
     #  elif settings.stt_provider == "runpod":
