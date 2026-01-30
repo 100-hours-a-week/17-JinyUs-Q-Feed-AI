@@ -28,8 +28,8 @@ class GeminiProvider:
         api_key: str | None = None,
         model: str | None = None,
     ):
-        self.client = genai.Client(api_key=api_key or settings.gemini_api_key)
-        self.model = model or settings.gemini_model_id
+        self.client = genai.Client(api_key=api_key or settings.GEMINI_API_KEY)
+        self.model = model or settings.GEMINI_MODEL_ID
 
     async def generate(
         self,

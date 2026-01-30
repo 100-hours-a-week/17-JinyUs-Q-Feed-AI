@@ -81,7 +81,7 @@ class AnswerAnalyzerResult(BaseModel):
 
     # 정상 답변인 경우의 분석 
     # 1. 취약하게 답변한 질문인지 아닌지 일단 boolean 
-    has_weakness: bool = Field(default=False, description="보완이 필요한 약점 존재 여부")
+    has_weakness: bool | None = Field(description="보완이 필요한 약점 존재 여부")
 
     # V2 꼬리질문 판단용
     needs_followup: bool = Field(default=False, description="꼬리질문 필요 여부")

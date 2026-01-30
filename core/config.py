@@ -72,5 +72,5 @@ def get_settings() -> Settings:
                     os.environ[env_var] = value
     
     settings = Settings()
-    print(f"=== ENVIRONMENT: {settings.environment} ===") 
+    print(f"=== ENVIRONMENT: {settings.ENVIRONMENT} ===") 
     return settings

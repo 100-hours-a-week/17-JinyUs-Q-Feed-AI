@@ -8,7 +8,7 @@ from core.logging import setup_logging, TraceIdMiddleware
 
 #로깅 설정
 settings = get_settings()
-setup_logging(environment=settings.environment)
+setup_logging(environment=settings.ENVIRONMENT)
 
 app = FastAPI()
 app.add_middleware(TraceIdMiddleware) 
