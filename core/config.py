@@ -8,13 +8,15 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "local"  # local | production
 
     # 로그 설정 추가
-    LOG_DIR: str = "./logs"
+    # 배포에서 LOG_DIR을 지정하지 않으면, 환경별 기본 경로를 사용합니다.
+    # (EC2 로그 정책 예: /var/log/qfeed/ai)
+    LOG_DIR: str | None = None
 
     @property
     def log_directory(self) -> str:
-        if self.LOG_DIR:
+        if self.LOG_DIR and self.LOG_DIR.strip():
             return self.LOG_DIR
-        # 환경별 기본값 설정 -> ec2 서버 log 경로 확정되면 수정할 것
+        # 환경별 기본값
         return "./logs" if self.ENVIRONMENT == "local" else "/var/log/qfeed/ai"
 
     STT_PROVIDER: str = "huggingface"  # or "runpod"
