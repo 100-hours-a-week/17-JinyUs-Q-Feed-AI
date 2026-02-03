@@ -13,9 +13,9 @@ class STTRequest(BaseModel):
     @classmethod
     def validate_audio_extension(cls, v:HttpUrl) -> HttpUrl:
         path = urlparse(str(v)).path
-        allowed_extensions = ('.mp3', '.m4a') 
+        allowed_extensions = ('.mp3', '.m4a', 'mp4') 
         if not path.endswith(allowed_extensions):
-            raise ValueError("audio_url must end with .mp3, .m4a")
+            raise ValueError("audio_url must end with .mp3, .m4a, .mp4")
         return v
 
 class STTData(BaseModel):
