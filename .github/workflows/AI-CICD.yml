@@ -2,11 +2,12 @@ name: AI CI
 # 테스트
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "dev"]
     tags: ["v*"]
   pull_request:
     branches:
       - main
+      - dev
 permissions:
   contents: read
   pull-requests: write
@@ -118,8 +119,77 @@ jobs:
             -H "Content-Type: application/json" \
             -d "$PAYLOAD"
 
-  deploy:
-    name: Deploy to EC2
+  deploy-dev:
+    name: Deploy to EC2 (Dev)
+    runs-on: ubuntu-latest
+    needs: lint-test
+
+    # dev 브랜치로 push된 경우에만 배포 실행 (PR에서는 실행하지 않음)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 패키지 버전 추출
+        id: package-version
+        run: |
+          VERSION=$(python -c "
+          import tomllib
+          with open('pyproject.toml', 'rb') as f:
+              data = tomllib.load(f)
+          print(data['project']['version'])
+          ")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: 빌드 산출물 다운로드
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-v${{ steps.package-version.outputs.version }}
+
+      # 서버로 산출물을 전송한 뒤, 서버 내부 deploy-ai.sh로 교체/백업 처리
+      - name: SSH 키 설정
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.QFEED_EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.QFEED_EC2_DEV_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: 서버 연결 테스트
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=30 \
+            -o ServerAliveInterval=10 \
+            ${{ secrets.QFEED_EC2_USER }}@${{ secrets.QFEED_EC2_DEV_HOST }} \
+            "echo 'Connection successful'"
+
+      - name: 서버로 파일 업로드 (SCP)
+        timeout-minutes: 5
+        run: |
+          scp -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=60 \
+            -o ServerAliveInterval=10 \
+            -o ServerAliveCountMax=3 \
+            ai-${{ steps.package-version.outputs.version }}.tar.gz \
+            ${{ secrets.QFEED_EC2_USER }}@${{ secrets.QFEED_EC2_DEV_HOST }}:/tmp/
+
+      - name: 서버에서 배포 실행 (deploy-ai.sh)
+        timeout-minutes: 5
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.QFEED_EC2_DEV_HOST }}
+          username: ${{ secrets.QFEED_EC2_USER }}
+          key: ${{ secrets.QFEED_EC2_SSH_KEY }}
+          timeout: 60s
+          command_timeout: 5m
+          script: |
+            set -e
+            sudo /srv/qfeed/deploy-ai.sh /tmp/ai-${{ steps.package-version.outputs.version }}.tar.gz
+
+  deploy-prod:
+    name: Deploy to EC2 (Prod)
     runs-on: ubuntu-latest
     needs: lint-test
 
@@ -191,8 +261,8 @@ jobs:
   discord-notify-failure:
     name: Discord 알림 (CI 실패)
     runs-on: ubuntu-latest
-    needs: [lint-test, deploy]
-    if: always() && (needs.lint-test.result == 'failure' || needs.deploy.result == 'failure')
+    needs: [lint-test, deploy-dev, deploy-prod]
+    if: always() && (needs.lint-test.result == 'failure' || needs.deploy-dev.result == 'failure' || needs.deploy-prod.result == 'failure')
     steps:
       - name: 실패한 Job/Step 조회
         id: failed
@@ -201,8 +271,10 @@ jobs:
           FAILED_STEP=""
           if [ "${{ needs.lint-test.result }}" == "failure" ]; then
             FAILED_JOB="lint-test"
-          elif [ "${{ needs.deploy.result }}" == "failure" ]; then
-            FAILED_JOB="deploy"
+          elif [ "${{ needs.deploy-dev.result }}" == "failure" ]; then
+            FAILED_JOB="deploy-dev"
+          elif [ "${{ needs.deploy-prod.result }}" == "failure" ]; then
+            FAILED_JOB="deploy-prod"
           fi
           if [ -z "$FAILED_JOB" ]; then
             FAILED_JOB="(알 수 없음)"
