@@ -118,11 +118,11 @@ class RubricEvaluationResult(BaseModel):
     delivery: int = Field(..., ge=1, le=5, description="전달력")
     
     # 내부용 근거 (피드백 생성에 활용)
-    accuracy_rationale: str = ""
-    logic_rationale: str = ""
-    specificity_rationale: str = ""
-    completeness_rationale: str = ""
-    delivery_rationale: str = ""
+    accuracy_rationale: str = Field(..., description="정확도 점수 부여 근거 (50-200자)")
+    logic_rationale: str = Field(..., description="논리력 점수 부여 근거 (50-200자)")
+    specificity_rationale: str = Field(..., description="구체성 점수 부여 근거 (50-200자)")
+    completeness_rationale: str = Field(..., description="완성도 점수 부여 근거 (50-200자)")
+    delivery_rationale: str = Field(..., description="전달력 점수 부여 근거 (50-200자)")
     
     def to_metrics_list(self) -> list[RubricScore]:
         """API 응답용 metrics 리스트로 변환"""

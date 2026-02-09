@@ -13,7 +13,6 @@ settings = get_settings()
 
 # MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 API_URL = "https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3-turbo"
-# API_URL = "https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3"
 headers = {
     "Authorization": f"Bearer {settings.HUGGINGFACE_API_KEY}",
 }
