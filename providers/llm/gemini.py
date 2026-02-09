@@ -31,6 +31,10 @@ class GeminiProvider:
         self.client = genai.Client(api_key=api_key or settings.GEMINI_API_KEY)
         self.model = model or settings.GEMINI_MODEL_ID
 
+    @property
+    def provider_name(self) -> str:
+        return "gemini"
+
     async def generate(
         self,
         prompt: str,
@@ -59,7 +63,7 @@ class GeminiProvider:
         *,
         system_prompt: str | None = None,
         temperature: float = 0.0,
-        max_tokens: int = 2000,
+        max_tokens: int = 4000,
     ) -> T:
         """Structured Output 생성 - JSON 파싱하여 Pydantic 모델로 반환"""
         full_prompt = self._build_prompt(prompt, system_prompt)
@@ -108,6 +112,7 @@ class GeminiProvider:
                 contents=prompt,
                 config=config,
             )
+            logger.debug(f"Gemini response : {response}")
             
             elapsed_ms = (time.perf_counter() - start_time) * 1000
             response_length = len(response.text) if response.text else 0

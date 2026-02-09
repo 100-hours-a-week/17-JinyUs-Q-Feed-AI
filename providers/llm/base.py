@@ -9,6 +9,11 @@ T = TypeVar("T", bound=BaseModel)
 
 class LLMProvider(Protocol):
     """LLM Provider 인터페이스"""
+
+    @property
+    def provider_name(self) -> str:
+        """Provider 식별자"""
+        ...
     
     async def generate(
         self,

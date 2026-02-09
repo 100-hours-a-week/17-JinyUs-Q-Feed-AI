@@ -20,6 +20,7 @@ class Settings(BaseSettings):
         return "./logs" if self.ENVIRONMENT == "local" else "/var/log/qfeed/ai"
 
     STT_PROVIDER: str = "huggingface"  # or "runpod"
+    LLM_PROVIDER: str = "gemini"  # "gemini" or "vllm"
 
     #v1 : HuggingFace
     HUGGINGFACE_API_KEY: str
@@ -42,6 +43,8 @@ class Settings(BaseSettings):
     callback_timeout_seconds: int = 30
 
     #v3 : RunPod
+    VLLM_BASE_URL: str 
+    VLLM_MODEL_ID: str
     
     model_config = {
         "env_file": ".env",
