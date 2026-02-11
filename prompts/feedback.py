@@ -97,8 +97,7 @@ def get_feedback_system_prompt(provider: str) -> str:
 def build_feedback_prompt(
     question_type: str,
     category: str,
-    question: str,
-    answer: str,
+    interview_text: str,
     rubric_result: RubricEvaluationResult,
 ) -> str:
     """피드백 생성용 프롬프트 생성"""
@@ -106,8 +105,7 @@ def build_feedback_prompt(
 
 [질문 유형]  {question_type} 
 [카테고리] {category}
-[질문] {question}
-[답변] {answer}
+[면접 히스토리] {interview_text}
 
 [루브릭 평가 결과]
 - 정확도: {rubric_result.accuracy}/5 - {rubric_result.accuracy_rationale}
