@@ -1,18 +1,57 @@
+import re
 from functools import lru_cache
+
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.util import cos_sim
 
 from graphs.feedback.state import FeedbackGraphState
 from schemas.feedback import KeywordCheckResult
 
+
 @lru_cache(maxsize=1)
 def _get_embedding_model() -> SentenceTransformer:
     return SentenceTransformer("jhgan/ko-sroberta-multitask")
 
-def keyword_checker(state: FeedbackGraphState, similarity_threshold: float = 0.3) -> dict:
-    """키워드 커버리지 체크 노드"""
 
-    #실전모드의 경우 필수키워드 체크 안함
+def _clean_stt_text(text: str) -> str:
+    """STT 결과에서 불필요한 추임새나 중복 공백 제거"""
+    fillers = ["음", "어", "그", "저", "아"]
+    for f in fillers:
+        text = re.sub(rf"(^|\s){f}+(\.\.|…|\s)", " ", text)
+    
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+
+def _get_sliding_windows(text: str, window_size: int = 30, stride: int = 15) -> list[str]:
+    """
+    텍스트를 슬라이딩 윈도우로 분할
+    
+    Args:
+        text: 분할할 텍스트
+        window_size: 윈도우 크기 (글자 수)
+        stride: 이동 간격
+    
+    Returns:
+        분할된 텍스트 조각 리스트
+    """
+    if len(text) <= window_size:
+        return [text]
+    
+    windows = []
+    for i in range(0, len(text), stride):
+        chunk = text[i:i + window_size]
+        if len(chunk) < 10:
+            continue
+        windows.append(chunk)
+    
+    return windows
+
+
+def keyword_checker(state: FeedbackGraphState, similarity_threshold: float = 0.5) -> dict:
+    """키워드 커버리지 체크 노드 (슬라이딩 윈도우 방식)"""
+
+    # 실전모드의 경우 필수키워드 체크 안함
     if not state["keywords"]:
         return {
             "keyword_result": KeywordCheckResult(
@@ -23,31 +62,34 @@ def keyword_checker(state: FeedbackGraphState, similarity_threshold: float = 0.3
             "current_step": "keyword_checker",
         }
     
-    #연습모드의 경우만 필수키워드 체크
     model = _get_embedding_model()
-
-    #연습모드 답변 텍스트
+    
+    # 연습모드 답변 텍스트 전처리
     answer = state["interview_history"][0].answer_text
-
+    cleaned_answer = _clean_stt_text(answer)
+    
+    # 슬라이딩 윈도우로 텍스트 분할
+    answer_chunks = _get_sliding_windows(cleaned_answer, window_size=20, stride=10)
+    
     # 임베딩 생성
-    texts = [answer] + state["keywords"]
-    embeddings = model.encode(texts)
-
-    answer_emb = embeddings[0]
-    keyword_embs = embeddings[1:]
-
-    # 각 키워드와 답변 간 유사도 계산
+    chunk_embeddings = model.encode(answer_chunks)
+    keyword_embeddings = model.encode(state["keywords"])
+    
     covered = []
     missing = []
-
-    for keyword, kw_emb in zip(state["keywords"], keyword_embs):
-        similarity = cos_sim(answer_emb, kw_emb).item()
-        if similarity >= similarity_threshold:
+    
+    # Max Score Strategy: 각 키워드에 대해 가장 높은 유사도를 가진 청크와 비교
+    for keyword, kw_emb in zip(state["keywords"], keyword_embeddings):
+        similarities = cos_sim(kw_emb, chunk_embeddings)[0]
+        max_score = similarities.max().item()
+        
+        if max_score >= similarity_threshold:
             covered.append(keyword)
         else:
             missing.append(keyword)
     
     coverage = len(covered) / len(state["keywords"])
+    
     return {
         "keyword_result": KeywordCheckResult(
             covered_keywords=covered,
