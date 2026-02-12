@@ -4,8 +4,8 @@ from typing import Literal
 from schemas.common import BaseResponse
 
 class InterviewType(str, Enum):
-    PRACTICE_INTERVIEW = "PRACTICE_INTERVIEW"
-    REAL_INTERVIEW = "REAL_INTERVIEW"
+    PRACTICE_INTERVIEW = "PRACTICE_INTERVIEW" # 연습모드
+    REAL_INTERVIEW = "REAL_INTERVIEW" # 실전모드
 
 class QuestionType(str, Enum):
     CS = "CS"
@@ -19,15 +19,17 @@ class QuestionCategory(str, Enum):
     DATA_STRUCTURE_ALGORITHM = "DATA_STRUCTURE_ALGORITHM"
     COMPUTER_ARCHITECTURE = "COMPUTER_ARCHITECTURE"
 
-    #----------------------------- 시스템 디자인 카테고리 ----------------------------#
-    NOTIFICATION_ENGAGEMENT = "NOTIFICATION_ENGAGEMENT"
-    MESSAGING_REALTIME_COMMUNICATION = "MESSAGING/REALTIME_COMMUNICATION"
-    SEARHCH_DELIVERY = "SEARCH_DELIVERY"
-    MEDIA_STREAMING_PROCESSING = "MEDIA_STREAMING_PROCESSING"
-    STORAGE_FILE_COLLABORATION = "STORAGE_FILE_COLLABORATION"
-    WEB_PLATRORM_INFRASTRUCTURE = "WEB_PLATFORM_INFRSTRUCTURE"
-    LOCATION_MAKETPLACE_TRANSACTION = "LOCATION_MARKETPLACE_TRANSACTION"
+    SOCIAL = ("SOCIAL", "소셜/피드 시스템")
+    MESSAGING = ("MESSAGING", "실시간 통신 시스템")
+    NOTIFICATION = ("NOTIFICATION", "알림 시스템")
+    SEARCH = ("SEARCH", "검색 시스템")
+    MEDIA = ("MEDIA", "미디어/스트리밍 시스템")
+    STORAGE = ("STORAGE", "파일 저장/협업 시스템")
+    PLATFORM = ("PLATFORM", "플랫폼 인프라")
+    TRANSACTION = ("TRANSACTION", "거래/정산 시스템")
 
+
+## BAD CASE 관련 Schema
 
 class BadCaseType(str, Enum):
     '''Bad Case 유형'''
@@ -38,7 +40,7 @@ class BadCaseType(str, Enum):
 BAD_CASE_MESSAGES = {
     BadCaseType.INSUFFICIENT: {
         "message": "답변의 내용이 부족하거나 반복적입니다.",
-        "guidance": "답변이 너무 짧거나 의미 없는 패턴이 반복되고 있습니다. "
+        "guidance": "답변이 너무 짧거나 의미 없는 패턴이 반복되고 있습니다."
     },
     BadCaseType.INAPPROPRIATE: {
         "message": "부적절한 표현이 감지되었습니다.",
@@ -67,7 +69,7 @@ class BadCaseFeedback(BaseModel):
         )
     
 class BadCaseResult(BaseModel):
-    '''answer analyzer 출력 스키마'''
+    '''bad case checker 출력 스키마'''
     is_bad_case : bool = Field(None, description="Bad case 유형 (해당시)")
     bad_case_feedback: BadCaseFeedback | None = Field(None, description="Bad case 피드백 (해당시)")
 
@@ -84,14 +86,13 @@ class BadCaseResult(BaseModel):
             bad_case_type=bad_type,
             bad_case_feedback=BadCaseFeedback.from_type(bad_type)
         )
-    
+
+   
 class KeywordCheckResult(BaseModel):
     """KeywordChecker 노드 출력 - 유사도 기반 키워드 매칭"""
     covered_keywords: list[str] = Field(default_factory=list, description="포함된 키워드")
     missing_keywords: list[str] = Field(default_factory=list, description="누락된 키워드")
     coverage_ratio: float = Field(..., ge=0.0, le=1.0, description="키워드 커버리지 비율")
-
-
 
 
 class RubricScore(BaseModel):
@@ -148,13 +149,24 @@ class FeedbackRequest(BaseModel):
     interview_history: list[QATurn]
     keywords: list[str] | None = Field(None, description="필수 키워드 목록")
 
-# Response schema
-class FeedbackContent(BaseModel):
-    """피드백 텍스트 내용"""
+class TopicFeedback(BaseModel):
+    """개별 토픽 피드백"""
     topic_id: int = Field(..., description="토픽 그룹 ID")
-    strengths: str = Field(..., description="잘한 점")
-    improvements: str = Field(..., description="개선할 점")
+    main_question: str = Field(..., description="메인 질문 텍스트")
+    strengths: str = Field(..., description="해당 토픽에서 잘한 점 (150-500자)")
+    improvements: str = Field(..., description="해당 토픽에서 개선할 점 (150-500자)")
 
+
+class OverallFeedback(BaseModel):
+    """종합 피드백"""
+    strengths: str = Field(..., description="전체적으로 잘한 점 (200-800자)")
+    improvements: str = Field(..., description="전체적으로 개선할 점 (200-800자)")
+    
+
+class FeedbackGenerationResult(BaseModel):
+    """피드백 생성 LLM 출력 스키마"""
+    topics_feedback: list[TopicFeedback] = Field(None, description="토픽별 피드백(토픽이 두개 이상일때만)")
+    overall_feedback: OverallFeedback = Field(..., description="종합 피드백")
 
 class FeedbackData(BaseModel):
     """피드백 응답 데이터"""
@@ -162,13 +174,14 @@ class FeedbackData(BaseModel):
     question_id: int 
     session_id: int | None = None
     
-    # Bad case 결과 (bad case일 때만)
+    # Bad case 결과
     bad_case_feedback: BadCaseFeedback | None = None
     
-    # 정상 평가 결과 (정상일 때만)
-    metrics: list[RubricScore] | None = None
+    # 정상 평가 결과
+    metrics: list[RubricScore] | None = None  # 종합 루브릭
     keyword_result: KeywordCheckResult | None = None
-    feedback: list[FeedbackContent] | None 
+    topics_feedback: list[TopicFeedback] | None = None  # 토픽별 피드백
+    overall_feedback: OverallFeedback | None = None  # 종합 피드백
 
 
 class FeedbackResponse(BaseResponse[FeedbackData]):
@@ -198,8 +211,9 @@ class FeedbackResponse(BaseResponse[FeedbackData]):
         user_id: int,
         question_id: int,
         rubric_result: RubricEvaluationResult,
-        keyword_result: KeywordCheckResult,
-        feedback: list[FeedbackContent],
+        overall_feedback: OverallFeedback,
+        keyword_result: KeywordCheckResult | None = None,
+        topics_feedback: list[TopicFeedback] | None = None,
         session_id: int | None = None,
     ) -> "FeedbackResponse":
         return cls(
@@ -210,18 +224,20 @@ class FeedbackResponse(BaseResponse[FeedbackData]):
                 session_id=session_id,
                 metrics=rubric_result.to_metrics_list(),
                 keyword_result=keyword_result,
-                feedback=feedback,
+                topics_feedback = topics_feedback,
+                overall_feedback = overall_feedback
             ),
         )
 
+# V2 비동기 처리 도입 시 사용
 
-class FeedbackAcceptedResponse(BaseResponse):
-    """V2 즉시 응답 - 비동기 처리 시작 알림
+# class FeedbackAcceptedResponse(BaseResponse):
+#     """V2 즉시 응답 - 비동기 처리 시작 알림
 
-    /ai/interview/feedback/request 호출 시 즉시 반환
-    """
-    message: Literal["feedback_generate"] = "feedback_generate"
-    data: None = None
+#     /ai/interview/feedback/request 호출 시 즉시 반환
+#     """
+#     message: Literal["feedback_generate"] = "feedback_generate"
+#     data: None = None
 
 # Callback Payload
 # class FeedbackCallbackPayload(BaseModel):

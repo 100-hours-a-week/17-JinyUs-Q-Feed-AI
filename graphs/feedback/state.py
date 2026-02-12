@@ -18,7 +18,8 @@ from schemas.feedback import(
     BadCaseResult,
     KeywordCheckResult,
     RubricEvaluationResult,
-    FeedbackContent
+    TopicFeedback,
+    OverallFeedback
 )
 
 class FeedbackGraphState(TypedDict):
@@ -50,7 +51,9 @@ class FeedbackGraphState(TypedDict):
     rubric_result : RubricEvaluationResult | None
 
     #FeedbackGenerator 노드 출력
-    feedback: FeedbackContent | None
+    topics_feedback : TopicFeedback | None
+
+    overall_feedback : OverallFeedback | None
 
     # 현재 처리 단계(디버깅용)
     current_step: str
@@ -89,7 +92,8 @@ def create_initial_state(
         bad_case_result=None,
         keyword_result=None,
         rubric_result=None,
-        feedback=None,
+        topics_feedback=None,
+        overall_feedback=None,
         
         # Control Flow
         current_step="initialized",

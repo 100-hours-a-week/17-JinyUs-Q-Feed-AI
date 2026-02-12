@@ -3,7 +3,7 @@ from schemas.feedback import (
     FeedbackRequest, 
     FeedbackResponse, 
     BadCaseResult,
-    InterviewType,  # 추가
+    InterviewType,
 )
 
 from services.bad_case_checker import get_bad_case_checker
@@ -21,13 +21,6 @@ class FeedbackService:
     async def generate_feedback(self, request: FeedbackRequest) -> FeedbackResponse:
         """피드백 생성 메인 로직"""
 
-
-        logger.info(
-            f"피드백 생성 시작 | user_id={request.user_id} | "
-            f"question_id={request.question_id} | interview_type={request.interview_type.value} | "
-            f"question_type={request.question_type.value} | category={request.category.value} "
-        )
-
         # Step 1: bad case 체크(연습모드에서만) - bad case로 필터링 되면 bad case 응답 
         bad_case_result = self._check_bad_case(request)
         if bad_case_result:
@@ -40,6 +33,8 @@ class FeedbackService:
 
         # Step 2: 그래프 실행
         result = await self._run_pipeline(request)
+        print(f"Graph result keys: {result.keys()}")
+        print(f"Graph result: {result}")
 
         # Step 3: 응답 변환 - 정상 피드백 응답
         return FeedbackResponse.from_evaluation(
@@ -48,7 +43,8 @@ class FeedbackService:
             session_id=result["session_id"],
             rubric_result=result["rubric_result"],
             keyword_result=result["keyword_result"],
-            feedback=result["feedback"],
+            topics_feedback=result["topics_feedback"],
+            overall_feedback=result["overall_feedback"]
         )
 
     def _check_bad_case(self, request: FeedbackRequest) -> BadCaseResult | None:
