@@ -1,5 +1,4 @@
 import re
-
 from sentence_transformers.util import cos_sim
 
 from graphs.feedback.state import FeedbackGraphState
