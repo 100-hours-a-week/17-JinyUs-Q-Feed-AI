@@ -19,14 +19,14 @@ class QuestionCategory(str, Enum):
     DATA_STRUCTURE_ALGORITHM = "DATA_STRUCTURE_ALGORITHM"
     COMPUTER_ARCHITECTURE = "COMPUTER_ARCHITECTURE"
 
-    SOCIAL = ("SOCIAL", "소셜/피드 시스템")
-    MESSAGING = ("MESSAGING", "실시간 통신 시스템")
-    NOTIFICATION = ("NOTIFICATION", "알림 시스템")
-    SEARCH = ("SEARCH", "검색 시스템")
-    MEDIA = ("MEDIA", "미디어/스트리밍 시스템")
-    STORAGE = ("STORAGE", "파일 저장/협업 시스템")
-    PLATFORM = ("PLATFORM", "플랫폼 인프라")
-    TRANSACTION = ("TRANSACTION", "거래/정산 시스템")
+    SOCIAL = "SOCIAL"
+    MESSAGING = "MESSAGING"
+    NOTIFICATION = "NOTIFICATION"
+    SEARCH = "SEARCH"
+    MEDIA = "MEDIA"
+    STORAGE = "STORAGE"
+    PLATFORM = "PLATFORM"
+    TRANSACTION = "TRANSACTION"
 
 
 ## BAD CASE 관련 Schema
@@ -129,7 +129,7 @@ class RubricEvaluationResult(BaseModel):
 class QATurn(BaseModel):
     question: str = Field(..., description="질문 텍스트")
     answer_text: str = Field(..., description="답변 텍스트")
-    turn_type: Literal["main", "follow_up"] = Field(..., description="질문 유형")
+    turn_type: Literal["new_topic", "follow_up"] = Field(..., description="질문 유형")
     turn_order: int = Field(..., description="전체 세션 내 순서 (0부터)")
     topic_id: int = Field(..., description="토픽 그룹 ID")
 
