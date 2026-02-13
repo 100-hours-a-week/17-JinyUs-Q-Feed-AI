@@ -8,6 +8,9 @@ from prompts.feedback import (
     build_single_topic_feedback_prompt
 )
 from core.dependencies import get_llm_provider
+from core.logging import get_logger
+
+logger = get_logger(__name__)
 
 def group_turns_by_topic(turns: list[QATurn]) -> dict[int, dict]:
     grouped : dict[int, list[QATurn]] = defaultdict(list)
@@ -41,6 +44,7 @@ async def feedback_generator(
     state: FeedbackGraphState
 ) -> dict:
     """피드백 텍스트 생성 노드"""
+    logger.debug("피드백 생성 시작")
     
     llm = get_llm_provider()
 
@@ -55,6 +59,7 @@ async def feedback_generator(
     
     if is_single_topic:
         # 단일 토픽: 종합 피드백만 생성
+        logger.debug("단일 토픽 피드백 생성")
         result = await llm.generate_structured(
             prompt=build_single_topic_feedback_prompt(
                 question_type=state["question_type"].value,
@@ -67,6 +72,7 @@ async def feedback_generator(
             temperature=0.3,
             max_tokens=2000,
         )
+        logger.info("피드백 생성 완료")
         return {
             "topics_feedback": None,
             "overall_feedback": result,
@@ -74,6 +80,7 @@ async def feedback_generator(
         }
     else:
         # 멀티 토픽: 토픽별 + 종합 피드백
+        logger.debug(f"멀티 토픽 피드백 생성 | topics={len(grouped_interview)}")
         result = await llm.generate_structured(
             prompt=build_multi_topic_feedback_prompt(
                 question_type=state["question_type"].value,
@@ -86,6 +93,7 @@ async def feedback_generator(
             temperature=0.3,
             max_tokens=4000,
         )
+        logger.info("피드백 생성 완료")
         return {
             "topics_feedback": result.topics_feedback,
             "overall_feedback": result.overall_feedback,

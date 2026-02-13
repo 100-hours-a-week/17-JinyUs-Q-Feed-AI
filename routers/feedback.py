@@ -3,7 +3,7 @@ from fastapi import APIRouter
 
 from schemas.feedback import FeedbackRequest, FeedbackResponse
 from services.feedback_service import FeedbackService
-from core.logging import get_logger, log_execution_time
+from core.logging import get_logger, log_execution_time, update_user_id
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -14,6 +14,16 @@ async def request_feedback(request: FeedbackRequest,):
     """
     면접 답변에 대한 피드백 생성
     """
+    update_user_id(str(request.user_id))
+    
+    logger.info(
+        f"피드백 생성 요청 | questionId={request.question_id}, "
+        f"sessionId={request.session_id}, type={request.interview_type.value}"
+    )
     service = FeedbackService()
-    return await service.generate_feedback(request)
+    response = await service.generate_feedback(request)
+    
+    logger.info(f"피드백 생성 완료 | success={response.message}")
+    
+    return response
 

@@ -24,6 +24,7 @@ class FeedbackService:
         # Step 1: bad case 체크(연습모드에서만) - bad case로 필터링 되면 bad case 응답 
         bad_case_result = self._check_bad_case(request)
         if bad_case_result:
+            logger.info(f"Bad case 감지 | type={bad_case_result.bad_case_feedback.type}")
             return FeedbackResponse.from_bad_case(
                 user_id=request.user_id,
                 question_id=request.question_id,
@@ -33,10 +34,10 @@ class FeedbackService:
 
         # Step 2: 그래프 실행
         result = await self._run_pipeline(request)
-        print(f"Graph result keys: {result.keys()}")
-        print(f"Graph result: {result}")
 
         # Step 3: 응답 변환 - 정상 피드백 응답
+        logger.debug(f"파이프라인 완료 | steps={result.get('current_step')}")
+        
         return FeedbackResponse.from_evaluation(
             user_id=result["user_id"],
             question_id=result["question_id"],
@@ -53,17 +54,25 @@ class FeedbackService:
         if request.interview_type != InterviewType.PRACTICE_INTERVIEW:
             return None
 
-        checker = get_bad_case_checker()
-        last_turn = request.interview_history[0]
-        result = checker.check(last_turn.question, last_turn.answer_text)
-        # bad case일 때만 반환, 정상이면 None
-        if result.is_bad_case:
-            return result
-        return None
+        try:
+            checker = get_bad_case_checker()
+            last_turn = request.interview_history[0]
+            result = checker.check(last_turn.question, last_turn.answer_text)
+            
+            if result.is_bad_case:
+                return result
+            return None
+            
+        except Exception as e:
+            # Bad case 체크 실패 시 로그만 남기고 계속 진행
+            logger.warning(f"Bad case 체크 실패, 스킵 | {type(e).__name__}: {e}")
+            return None
     
     @log_execution_time(logger)
     async def _run_pipeline(self, request: FeedbackRequest) -> dict:
         """그래프 파이프라인 실행"""
+        logger.info("피드백 파이프라인 시작")
+
         initial_state = create_initial_state(
             user_id=request.user_id,
             question_id=request.question_id,
@@ -74,4 +83,7 @@ class FeedbackService:
             category=request.category,
             keywords=request.keywords,
         )
-        return await run_feedback_pipeline(initial_state)
+        result = await run_feedback_pipeline(initial_state)
+        
+        logger.info("피드백 파이프라인 완료")
+        return result

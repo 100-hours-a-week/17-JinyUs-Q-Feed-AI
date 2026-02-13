@@ -19,8 +19,8 @@ class Settings(BaseSettings):
         # 환경별 기본값
         return "./logs" if self.ENVIRONMENT == "local" else "/var/log/qfeed/ai"
 
-    STT_PROVIDER: str = "runpod"  # or "runpod"
-    LLM_PROVIDER: str = "vllm"  # "gemini" or "vllm"
+    STT_PROVIDER: str = "huggingface"  #huggingface or "runpod"
+    LLM_PROVIDER: str = "gemini"  # "gemini" or "vllm"
 
     #v1 : HuggingFace
     HUGGINGFACE_API_KEY: str

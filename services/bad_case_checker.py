@@ -8,6 +8,9 @@ from sentence_transformers.util import cos_sim
 
 from schemas.feedback import BadCaseResult, BadCaseType
 from providers.embedding.sentence_transformer import get_embedding_provider
+from core.logging import get_logger
+
+logger = get_logger(__name__)
 
 FILLER_POS = {
     "JKS", "JKC", "JKG", "JKO", "JKB", "JKV", "JX", "JC",
@@ -21,6 +24,7 @@ def _get_kiwi() -> Kiwi:
     return Kiwi()
 
 class BadCaseChecker:
+    """답변 품질 사전 검사"""
     def __init__(self, min_meaningful_tokens: int = 3, similarity_threshold: float = 0.3):
         self.min_meaningful_tokens = min_meaningful_tokens
         self.similarity_threshold = similarity_threshold
@@ -43,8 +47,12 @@ class BadCaseChecker:
         return similarity < self.similarity_threshold
 
     def _count_meaningful_tokens(self, text: str) -> int:
-        tokens = self._kiwi.tokenize(text)
-        return sum(1 for t in tokens if t.tag not in FILLER_POS)
+        try:
+            tokens = self._kiwi.tokenize(text)
+            return sum(1 for t in tokens if t.tag not in FILLER_POS)
+        except Exception as e:
+            logger.warning(f"토큰화 실패 | {type(e).__name__}: {e}")
+            return len(text.split())
 
     def _has_repetitive_pattern(self, answer: str) -> bool:
         if re.search(r'(.)\1{4,}', answer):
@@ -57,18 +65,20 @@ class BadCaseChecker:
         return False
     
     def check(self, question: str, answer: str) -> BadCaseResult:
-            """단일 Q&A 쌍 체크 - 메인 인터페이스"""
+        """단일 Q&A 쌍 체크 - 메인 인터페이스"""
+        logger.debug(f"Bad case 체크 시작 | answer_len={len(answer)}")
 
-            if self.check_inappropriate(answer):
-                return BadCaseResult.bad(BadCaseType.INAPPROPRIATE)
-            
-            if self.check_insufficient(answer):
-                return BadCaseResult.bad(BadCaseType.INSUFFICIENT)
-            
-            if self.check_off_topic(question, answer):
-                return BadCaseResult.bad(BadCaseType.OFF_TOPIC)
-            
-            return BadCaseResult.normal()
+        if self.check_inappropriate(answer):
+            return BadCaseResult.bad(BadCaseType.INAPPROPRIATE)
+        
+        if self.check_insufficient(answer):
+            return BadCaseResult.bad(BadCaseType.INSUFFICIENT)
+        
+        if self.check_off_topic(question, answer):
+            return BadCaseResult.bad(BadCaseType.OFF_TOPIC)
+        
+        logger.debug("Bad case 없음")
+        return BadCaseResult.normal()
     
 @lru_cache(maxsize=1)
 def get_bad_case_checker() -> BadCaseChecker:

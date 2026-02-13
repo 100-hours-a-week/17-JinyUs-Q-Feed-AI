@@ -6,7 +6,7 @@ from core.logging import get_logger, log_execution_time
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 from providers.stt.huggingface import transcribe
-from project.qfeed.providers.stt.gpu_stt import transcribe as runpod_transcribe   
+from providers.stt.gpu_stt import transcribe as runpod_transcribe   
 
 logger = get_logger(__name__)
 
