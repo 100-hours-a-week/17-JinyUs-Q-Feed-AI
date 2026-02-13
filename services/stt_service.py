@@ -6,7 +6,7 @@ from core.logging import get_logger, log_execution_time
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 from providers.stt.huggingface import transcribe
-# from services.providers.stt.runpod import transcribe as runpod_transcribe   
+from project.qfeed.providers.stt.gpu_stt import transcribe as runpod_transcribe   
 
 logger = get_logger(__name__)
 
@@ -15,12 +15,11 @@ TranscribeFunc = Callable[[str], Awaitable[str]]
 settings = get_settings()
 
 def get_stt_provider() -> TranscribeFunc:
-    """설정에 따라 STT provider 반환 - gpu 인스턴스 장애 시 huggingface로 전환 가능"""
+    """설정에 따라 STT provider 반환"""
     if settings.STT_PROVIDER == "huggingface":
         return transcribe
-    # runpod 이전 시
-    #  elif settings.stt_provider == "runpod":
-    #      return runpod_transcribe
+    elif settings.STT_PROVIDER == "runpod":
+        return runpod_transcribe
     return transcribe
     
 @log_execution_time(logger)

@@ -19,7 +19,7 @@ class Settings(BaseSettings):
         # 환경별 기본값
         return "./logs" if self.ENVIRONMENT == "local" else "/var/log/qfeed/ai"
 
-    STT_PROVIDER: str = "huggingface"  # or "runpod"
+    STT_PROVIDER: str = "runpod"  # or "runpod"
     LLM_PROVIDER: str = "vllm"  # "gemini" or "vllm"
 
     #v1 : HuggingFace
@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     callback_timeout_seconds: int = 30
 
     #v3 : RunPod
-    VLLM_BASE_URL: str 
+    GPU_BASE_URL: str 
     VLLM_MODEL_ID: str
     
     model_config = {

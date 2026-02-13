@@ -28,7 +28,7 @@ class VLLMProvider:
         model: str | None = None,
         timeout: float = 180.0,
     ):
-        self.base_url = base_url or settings.VLLM_BASE_URL  
+        self.base_url = base_url or settings.GPU_BASE_URL
         self.model = model or settings.VLLM_MODEL_ID  
         self.timeout = timeout
 
