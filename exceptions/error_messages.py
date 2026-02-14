@@ -22,6 +22,7 @@ class ErrorMessage(str, Enum):
     ANSWER_TOO_SHORT = "answer_too_short"
     ANSWER_TOO_LONG = "answer_too_long"
     INVALID_ANSWER_FORMAT = "invalid_answer_format"
+    BAD_CASE_CHECK_FAILED = "bad_case_check_failed"
     FEEDBACK_ALREADY_IN_PROGRESS = "feedback_already_in_progress"
     RUBRIC_EVALUATION_FAILED = "rubric_evaluation_failed"
     FEEDBACK_GENERATION_FAILED = "feedback_generation_failed"
@@ -32,6 +33,7 @@ class ErrorMessage(str, Enum):
     LLM_TIMEOUT = "llm_timeout"
 
     # 공통
+    SERVER_CONNECTION_FAILED = "server_connection_failed"
     API_KEY_INVALID = "api_key_invalid"
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
     INTERNAL_SERVER_ERROR = "internal_server_error"
@@ -73,6 +75,8 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     ErrorMessage.RATE_LIMIT_EXCEEDED: 429,
 
     # 500 Internal Server Error
+    ErrorMessage.BAD_CASE_CHECK_FAILED : 500,
+    ErrorMessage.SERVER_CONNECTION_FAILED: 500,
     ErrorMessage.STT_CONVERSION_FAILED: 500,
     ErrorMessage.FEEDBACK_GENERATION_FAILED: 500,
     ErrorMessage.RUBRIC_EVALUATION_FAILED: 500,
@@ -80,6 +84,7 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     
 
     # 502 Bad Gateway
+    ErrorMessage.SERVER_CONNECTION_FAILED: 502,
     ErrorMessage.STT_SERVICE_UNAVAILABLE: 502,
     ErrorMessage.LLM_SERVICE_UNAVAILABLE: 502,
     ErrorMessage.LLM_RESPONSE_PARSE_FAILED: 502,

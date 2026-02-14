@@ -2,18 +2,20 @@ import httpx
 import time 
 from pathlib import Path
 
+from langsmith import traceable
+
 from core.config import get_settings
-from core.logging import get_logger, get_metrics_logger, log_execution_time
+from core.logging import get_logger
+from core.tracing import record_stt_metrics, record_tool_metrics
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 
-logger = get_logger(__name__)
-metrics_logger = get_metrics_logger()   
+logger = get_logger(__name__) 
 settings = get_settings()
 
-@log_execution_time(logger)
 async def download_audio(url: str) -> bytes:
     """오디오 다운로드"""
+    start_time = time.perf_counter()
     logger.debug("오디오 다운로드 시작")
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -28,14 +30,31 @@ async def download_audio(url: str) -> bytes:
             
             response.raise_for_status()
             audio_data = response.content
-            
+
+            latency_ms = (time.perf_counter() - start_time) * 1000
+            audio_size_kb = len(audio_data) / 1024
+
             logger.info(f"size={len(audio_data) / 1024:.1f}KB")
+
+            record_tool_metrics(
+                tool_name="download_audio",
+                latency_ms=latency_ms,
+                success=True,
+                audio_size_kb=round(audio_size_kb, 1),
+            )
+            
             return audio_data
             
     except AppException:
         raise  # 우리가 던진 건 그대로 전파
     except httpx.TimeoutException:
         logger.error("오디오 다운로드 타임 아웃")
+        record_tool_metrics(
+            tool_name="download_audio",
+            latency_ms=(time.perf_counter() - start_time) * 1000,
+            success=False,
+            error="timeout",
+        )
         raise AppException(ErrorMessage.AUDIO_DOWNLOAD_TIMEOUT)
     except httpx.HTTPStatusError as e:
         if e.response.status_code >= 500:
@@ -57,7 +76,7 @@ def get_filename(audio_url: str) -> str:
         audio_url = audio_url.split("?")[0]
     return Path(audio_url).name or "audio.mp4"
 
-@log_execution_time(logger)
+@traceable(run_type="tool", name="runpod_stt")
 async def transcribe(audio_url: str, language: str = "ko") -> str:
     """Presigned URL에서 오디오 다운로드하여 RunPod GPU 인스턴스로 STT 수행"""
     filename = get_filename(audio_url)
@@ -91,6 +110,7 @@ async def transcribe(audio_url: str, language: str = "ko") -> str:
             text = result.get("text", "").strip()
 
             api_elapsed_ms = (time.perf_counter() - api_start) * 1000
+            audio_duration_sec = result.get("duration", 0)
 
             logger.info(
                 f"RunPod API 완료 | duration={result.get('duration', 0):.1f}s | "
@@ -98,12 +118,13 @@ async def transcribe(audio_url: str, language: str = "ko") -> str:
                 f"api_latency={api_elapsed_ms:.0f}ms"
             )
 
-            # 메트릭 로깅
-            metrics_logger.info(
-                f"STT_METRIC | provider=runpod | model=whisper-large-v3-turbo | "
-                f"audio_size_kb={audio_size_kb:.1f} | api_latency_ms={api_elapsed_ms:.2f} | "
-                f"audio_duration_s={result.get('duration', 0):.1f} | "
-                f"text_length={len(text)}"
+            record_stt_metrics(
+                provider="runpod",
+                model="whisper-large-v3-turbo",
+                latency_ms=api_elapsed_ms,
+                audio_duration_sec=audio_duration_sec if audio_duration_sec > 0 else None,
+                transcribed_text_length=len(text),
+                language=language,
             )
 
             return text
@@ -112,6 +133,13 @@ async def transcribe(audio_url: str, language: str = "ko") -> str:
         raise
     except httpx.TimeoutException:
         logger.error("RunPod API 타임아웃")
+        record_stt_metrics(
+            provider="runpod",
+            model="whisper-large-v3-turbo",
+            latency_ms=(time.perf_counter() - api_start) * 1000,
+            transcribed_text_length=0,
+            language=language,
+        )
         raise AppException(ErrorMessage.STT_TIMEOUT)
     except httpx.HTTPStatusError as e:
         logger.error(
@@ -127,7 +155,7 @@ async def transcribe(audio_url: str, language: str = "ko") -> str:
         raise AppException(ErrorMessage.STT_CONVERSION_FAILED)
     except httpx.RequestError as re:
         logger.error(f"RunPod 연결 실패 | {type(re).__name__}: {re}")
-        raise AppException(ErrorMessage.STT_CONNECTION_FAILED)
+        raise AppException(ErrorMessage.SERVER_CONNECTION_FAILED)
     except Exception as e:
         logger.error(f"RunPod STT 예외 | {type(e).__name__}: {e}")
         raise AppException(ErrorMessage.STT_CONVERSION_FAILED)

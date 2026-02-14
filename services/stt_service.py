@@ -1,8 +1,11 @@
-
 from typing import Callable, Awaitable
+import time
+
+from langsmith import traceable
 
 from core.config import get_settings
-from core.logging import get_logger, log_execution_time
+from core.logging import get_logger
+from core.tracing import record_tool_metrics
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 from providers.stt.huggingface import transcribe
@@ -14,28 +17,65 @@ logger = get_logger(__name__)
 TranscribeFunc = Callable[[str], Awaitable[str]]
 settings = get_settings()
 
-def get_stt_provider() -> TranscribeFunc:
-    """설정에 따라 STT provider 반환"""
-    if settings.STT_PROVIDER == "huggingface":
-        return transcribe
-    elif settings.STT_PROVIDER == "runpod":
-        return runpod_transcribe
-    return transcribe
-    
-@log_execution_time(logger)
+def get_stt_provider() -> tuple[TranscribeFunc, str]:
+    """설정에 따라 STT provider와 이름 반환"""
+    if settings.STT_PROVIDER == "runpod":
+        return runpod_transcribe, "runpod"
+    return transcribe, "huggingface"
+
+
+@traceable(run_type="chain", name="STT_service")
 async def process_transcribe(audio_url: str) -> str:
     """음성 파일을 텍스트로 변환 처리"""
+    start_time = time.perf_counter()
     file_name = audio_url.split('?')[0].split('/')[-1] if audio_url else "unknown"
     logger.debug(f"STT 변환 시작 | file={file_name}")
 
     # 2. STT 변환 처리
-    provider = get_stt_provider()
+    provider, provider_name = get_stt_provider()
 
-    text = await provider(audio_url)  # AppException은 그냥 통과
-    
-    if not text or not text.strip():
-        logger.warning(f"STT 결과 비어있음 | file={file_name}")
-        raise AppException(ErrorMessage.AUDIO_UNPROCESSABLE)
-    
-    logger.info(f"STT 변환 완료 | file={file_name}")
-    return text
+    try:
+        text = await provider(audio_url)
+
+        if not text or not text.strip():
+            logger.warning(f"STT 결과 비어있음 | file={file_name}")
+            
+            record_tool_metrics(
+                tool_name="process_transcribe",
+                latency_ms=(time.perf_counter() - start_time) * 1000,
+                success=False,
+                provider=provider_name,
+                error="empty_result",
+            )
+            
+            raise AppException(ErrorMessage.AUDIO_UNPROCESSABLE)
+
+        latency_ms = (time.perf_counter() - start_time) * 1000
+
+        logger.info(f"STT 변환 완료 | file={file_name}")
+
+        # 메트릭 기록
+        record_tool_metrics(
+            tool_name="STT_service",
+            latency_ms=latency_ms,
+            success=True,
+            provider=provider_name,
+            text_length=len(text),
+            file_name=file_name,
+        )
+
+        return text
+    except AppException:
+        raise
+    except Exception as e:
+        logger.error(f"STT 변환 예외 | file={file_name} | {type(e).__name__}: {e}")
+        
+        record_tool_metrics(
+            tool_name="STT_service",
+            latency_ms=(time.perf_counter() - start_time) * 1000,
+            success=False,
+            provider=provider_name,
+            error=str(e)[:200],
+        )
+        
+        raise AppException(ErrorMessage.STT_CONVERSION_FAILED) from e

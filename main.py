@@ -1,14 +1,15 @@
 from fastapi import FastAPI
-from routers import stt,feedback
+
 from exceptions.handlers import app_exception_handler, global_exception_handler
 from exceptions.exceptions import AppException
 from core.config import get_settings
 from core.logging import setup_logging, RequestLoggingMiddleware
 
-
-#로깅 설정
 settings = get_settings()
+settings.configure_langsmith() 
 setup_logging(environment=settings.ENVIRONMENT, log_dir=settings.log_directory)
+
+from routers import stt,feedback
 
 app = FastAPI()
 app.add_middleware(RequestLoggingMiddleware)

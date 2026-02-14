@@ -1,14 +1,17 @@
 # services/bad_case_checker.py
 import re
+import time
 from functools import lru_cache
 
 from kiwipiepy import Kiwi
 from korcen import korcen
 from sentence_transformers.util import cos_sim
+from langsmith import traceable
 
 from schemas.feedback import BadCaseResult, BadCaseType
 from providers.embedding.sentence_transformer import get_embedding_provider
 from core.logging import get_logger
+from core.tracing import record_tool_metrics, record_embedding_metrics
 
 logger = get_logger(__name__)
 
@@ -41,10 +44,27 @@ class BadCaseChecker:
             return True
         return False
 
+    @traceable(run_type="embedding", name="off_topic_similarity")
     def check_off_topic(self, question: str, answer: str) -> bool:
+        """주제 이탈 체크 - 임베딩 사용"""
+        start_time = time.perf_counter()
+
         q_emb, a_emb = self._model.encode([question, answer])
         similarity = cos_sim(q_emb, a_emb).item()
-        return similarity < self.similarity_threshold
+
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        is_off_topic = similarity < self.similarity_threshold
+
+        # 임베딩 메트릭 기록
+        record_embedding_metrics(
+            provider="sentence_transformer",
+            model=self._model.model_name if hasattr(self._model, "model_name") else "unknown",
+            latency_ms=latency_ms,
+            input_count=2,
+            similarity_score=similarity,
+        )
+
+        return is_off_topic
 
     def _count_meaningful_tokens(self, text: str) -> int:
         try:
@@ -64,21 +84,52 @@ class BadCaseChecker:
             return True
         return False
     
+    @traceable(run_type="tool", name="bad_case_check")
     def check(self, question: str, answer: str) -> BadCaseResult:
         """단일 Q&A 쌍 체크 - 메인 인터페이스"""
-        logger.debug(f"Bad case 체크 시작 | answer_len={len(answer)}")
+        start_time = time.perf_counter()
 
+        result = None
+        checks_performed = []
+
+        # 1. 부적절 표현 체크
         if self.check_inappropriate(answer):
-            return BadCaseResult.bad(BadCaseType.INAPPROPRIATE)
+            result = BadCaseResult.bad(BadCaseType.INAPPROPRIATE)
+            checks_performed.append("inappropriate")
         
-        if self.check_insufficient(answer):
-            return BadCaseResult.bad(BadCaseType.INSUFFICIENT)
+        # 2. 불충분 답변 체크
+        elif self.check_insufficient(answer):
+            result = BadCaseResult.bad(BadCaseType.INSUFFICIENT)
+            checks_performed.append("insufficient")
         
-        if self.check_off_topic(question, answer):
-            return BadCaseResult.bad(BadCaseType.OFF_TOPIC)
+        # 3. 주제 이탈 체크
+        elif self.check_off_topic(question, answer):
+            result = BadCaseResult.bad(BadCaseType.OFF_TOPIC)
+            checks_performed.append("off_topic")
+        
+        else:
+            result = BadCaseResult.normal()
+            checks_performed = ["inappropriate", "insufficient", "off_topic"]
+
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        
+        # 메트릭 기록
+        record_tool_metrics(
+            tool_name="bad_case_check",
+            latency_ms=latency_ms,
+            success=True,
+            question_length=len(question),
+            answer_length=len(answer),
+            is_bad_case=result.is_bad_case,
+            bad_case_type=result.bad_case_feedback.type if result.is_bad_case else None,
+            checks_performed=checks_performed,
+            min_meaningful_tokens=self.min_meaningful_tokens,
+            similarity_threshold=self.similarity_threshold,
+        )
         
         logger.debug("Bad case 없음")
         return BadCaseResult.normal()
+    
     
 @lru_cache(maxsize=1)
 def get_bad_case_checker() -> BadCaseChecker:

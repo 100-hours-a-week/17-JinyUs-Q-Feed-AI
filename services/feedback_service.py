@@ -1,23 +1,27 @@
 # services/feedback_service.py
+from langsmith import traceable
+
 from schemas.feedback import (
     FeedbackRequest, 
     FeedbackResponse, 
     BadCaseResult,
     InterviewType,
 )
-
+from exceptions.exceptions import AppException
+from exceptions.error_messages import ErrorMessage
 from services.bad_case_checker import get_bad_case_checker
 from graphs.feedback.state import create_initial_state
 from graphs.feedback.feedback_graph import run_feedback_pipeline
 
-from core.logging import get_logger, log_execution_time
+from core.logging import get_logger
+from core.tracing import record_tool_metrics
 
 logger = get_logger(__name__)
 
 class FeedbackService:
     """피드백 생성 서비스"""
 
-    @log_execution_time(logger)
+    @traceable(run_type="chain", name="generate_feedback")
     async def generate_feedback(self, request: FeedbackRequest) -> FeedbackResponse:
         """피드백 생성 메인 로직"""
 
@@ -48,10 +52,18 @@ class FeedbackService:
             overall_feedback=result["overall_feedback"]
         )
 
+    @traceable(run_type="tool", name="check_bad_case_wrapper")
     def _check_bad_case(self, request: FeedbackRequest) -> BadCaseResult | None:
         """Bad case 체크, 해당 시 응답 반환"""
         # 연습모드가 아니면 스킵
         if request.interview_type != InterviewType.PRACTICE_INTERVIEW:
+            record_tool_metrics(
+                tool_name="bad_case_check",
+                latency_ms=0,
+                success=True,
+                skipped=True,
+                reason="not_practice_mode",
+            )
             return None
 
         try:
@@ -64,11 +76,15 @@ class FeedbackService:
             return None
             
         except Exception as e:
-            # Bad case 체크 실패 시 로그만 남기고 계속 진행
-            logger.warning(f"Bad case 체크 실패, 스킵 | {type(e).__name__}: {e}")
-            return None
+            logger.error(f"Bad case 체크 실패 | {type(e).__name__}: {e}")
+            record_tool_metrics(
+                tool_name="bad_case_check",
+                latency_ms=0,
+                success=False,
+                error=str(e)[:200],
+            )
+            raise AppException(ErrorMessage.BAD_CASE_CHECK_FAILED) from e
     
-    @log_execution_time(logger)
     async def _run_pipeline(self, request: FeedbackRequest) -> dict:
         """그래프 파이프라인 실행"""
         logger.info("피드백 파이프라인 시작")

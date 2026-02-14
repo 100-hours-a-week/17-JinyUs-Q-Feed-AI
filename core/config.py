@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     # gemini
     GEMINI_API_KEY: str
-    GEMINI_MODEL_ID: str = "gemini-2.5-pro"
+    GEMINI_MODEL_ID: str = "gemini-2.5-flash"
 
     # AWS S3 설정
     AWS_ACCESS_KEY_ID: str | None = None
@@ -42,9 +42,36 @@ class Settings(BaseSettings):
     feedback_callback_url: str = "http://backend-server/ai/interview/feedback/generate"
     callback_timeout_seconds: int = 30
 
-    #v3 : RunPod
+    # GPU 관련 설정
     GPU_BASE_URL: str 
     VLLM_MODEL_ID: str
+
+    # LangSmith 설정
+    LANGCHAIN_API_KEY: str | None = None
+    LANGCHAIN_PROJECT: str | None = None
+    LANGSMITH_ENDPOINT: str = "https://api.smith.langchain.com"
+    LANGCHAIN_TRACING_V2: str = "true"
+
+    @property
+    def langchain_project_name(self) -> str:
+        """환경별 LangSmith 프로젝트 이름 반환"""
+        if self.LANGCHAIN_PROJECT:
+            return self.LANGCHAIN_PROJECT
+        
+        # 환경별 기본값
+        project_names = {
+            "local": "qfeed-local",
+            "production": "qfeed-prod",
+        }
+        return project_names.get(self.ENVIRONMENT, f"qfeed-{self.ENVIRONMENT}")
+
+    def configure_langsmith(self):
+        """LangSmith 환경변수 설정"""
+        if self.LANGCHAIN_API_KEY and self.LANGCHAIN_TRACING_V2:
+            os.environ["LANGCHAIN_TRACING_V2"] = self.LANGCHAIN_TRACING_V2
+            os.environ["LANGCHAIN_API_KEY"] = self.LANGCHAIN_API_KEY
+            os.environ["LANGCHAIN_PROJECT"] = self.langchain_project_name
+            os.environ["LANGCHAIN_ENDPOINT"] = self.LANGSMITH_ENDPOINT
     
     model_config = {
         "env_file": ".env",
@@ -68,6 +95,7 @@ def get_settings() -> Settings:
             "HUGGINGFACE_API_KEY": "/qfeed/prod/ai/huggingface-api-key",
             "GEMINI_API_KEY": "/qfeed/prod/ai/gemini-api-key",
             "AWS_S3_AUDIO_BUCKET": "/qfeed/prod/ai/aws-s3-audio-bucket",
+            "LANGCHAIN_API_KEY": "/qfeed/prod/ai/langchain-api-key",
         }
         
         for env_var, ssm_path in ssm_mappings.items():
