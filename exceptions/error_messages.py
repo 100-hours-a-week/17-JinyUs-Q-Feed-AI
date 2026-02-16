@@ -27,6 +27,10 @@ class ErrorMessage(str, Enum):
     RUBRIC_EVALUATION_FAILED = "rubric_evaluation_failed"
     FEEDBACK_GENERATION_FAILED = "feedback_generation_failed"
 
+    #질문 생성 관련 
+    QUESTION_GENERATION_FAILED = "question_generation_failed"
+
+
     # LLM 관련
     LLM_SERVICE_UNAVAILABLE = "llm_service_unavailable"
     LLM_RESPONSE_PARSE_FAILED = "llm_response_parse_failed"
@@ -81,6 +85,7 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     ErrorMessage.FEEDBACK_GENERATION_FAILED: 500,
     ErrorMessage.RUBRIC_EVALUATION_FAILED: 500,
     ErrorMessage.INTERNAL_SERVER_ERROR: 500,
+    ErrorMessage.QUESTION_GENERATION_FAILED: 500,
     
 
     # 502 Bad Gateway

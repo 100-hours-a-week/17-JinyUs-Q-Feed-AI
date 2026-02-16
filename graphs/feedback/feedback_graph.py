@@ -67,12 +67,18 @@ def _wrap_node(node_name: str, node_func):
         return async_wrapper
     return sync_wrapper
 
+_feedback_graph = None
+
+def get_feedback_graph() -> StateGraph:
+    """컴파일된 그래프 인스턴스 반환 (싱글톤)"""
+    global _feedback_graph
+    if _feedback_graph is None:
+        _feedback_graph = build_feedback_graph()
+    return _feedback_graph
+
 async def run_feedback_pipeline(initial_state: FeedbackGraphState) -> FeedbackGraphState:
     """피드백 파이프라인 실행"""
-
-    logger.debug("파이프라인 실행")
-
-    graph = build_feedback_graph()
+    graph = get_feedback_graph()
 
     try: 
         result = await graph.ainvoke(initial_state)

@@ -128,7 +128,7 @@ class BadCaseChecker:
         )
         
         logger.debug("Bad case 없음")
-        return BadCaseResult.normal()
+        return result
     
     
 @lru_cache(maxsize=1)
