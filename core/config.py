@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     STT_PROVIDER: str = "runpod"  #huggingface or "runpod"
     LLM_PROVIDER: str = "gemini"  # "gemini" or "vllm"
 
-    #v1 : HuggingFace
+    #v1 : STT
     HUGGINGFACE_API_KEY: str
     HUGGINGFACE_MODEL_ID: str = "openai/whisper-large-v3-turbo"
 
@@ -45,6 +45,17 @@ class Settings(BaseSettings):
     # GPU 관련 설정
     GPU_BASE_URL: str 
     VLLM_MODEL_ID: str
+
+    # TTS(eleven_labs)
+    ELEVENLABS_API_KEY: str
+    ELEVENLABS_VOICE_IDS: str = "a52RveZOORPA9buQulXm,z6Kj0hecH20CdetSElRT,pb3lVZVjdFWbkhPKlelB" #daehyeok,jennie,harry
+    ELEVENLABS_MODEL_ID: str = "eleven_flash_v2_5"
+
+    @property
+    def elevenlabs_voice_id_list(self) -> list[str]:
+        """VOICE_IDS를 리스트로 변환"""
+        return [v.strip() for v in self.ELEVENLABS_VOICE_IDS.split(",")]
+
 
     # LangSmith 설정
     LANGCHAIN_API_KEY: str | None = None
@@ -96,6 +107,7 @@ def get_settings() -> Settings:
             "GEMINI_API_KEY": "/qfeed/prod/ai/gemini-api-key",
             "AWS_S3_AUDIO_BUCKET": "/qfeed/prod/ai/aws-s3-audio-bucket",
             "LANGCHAIN_API_KEY": "/qfeed/prod/ai/langchain-api-key",
+            "ELEVENLABS_API_KEY": "/qfeed/prod/ai/elevenlabs-api-key"
         }
         
         for env_var, ssm_path in ssm_mappings.items():

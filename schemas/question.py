@@ -49,7 +49,7 @@ class Portfolio(BaseModel):
 class QuestionGenerateRequest(BaseModel):
     """질문 생성 요청 - Java 백엔드 → AI 서버"""
     user_id: int = Field(..., description="사용자 ID")
-    session_id: int = Field(..., description="면접 세션 ID")
+    session_id: str = Field(..., description="면접 세션 ID")
     question_type: QuestionType = Field(..., description="질문 유형 (CS/SYSTEM_DESIGN/PORTFOLIO)")
     category: QuestionCategory | None = Field(None, description="질문 카테고리")
     interview_history: list[QATurn] = Field(
@@ -69,7 +69,7 @@ class QuestionGenerateRequest(BaseModel):
 class GeneratedQuestion(BaseModel):
     """생성된 질문"""
     user_id: int
-    session_id: int
+    session_id: str
     question_text: str | None = Field(
         None, 
         description="질문 텍스트 (세션 종료 시 None)"
@@ -128,7 +128,7 @@ class QuestionGenerateResponse(BaseResponse[GeneratedQuestion]):
     def from_bad_case(
         cls,
         user_id: int,
-        session_id: int,
+        session_id: str,
         bad_case_result: BadCaseResult,
         interview_history: list[QATurn],
     ) -> "QuestionGenerateResponse":

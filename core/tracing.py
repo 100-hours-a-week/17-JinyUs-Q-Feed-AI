@@ -69,6 +69,36 @@ def record_stt_metrics(
 
     run_tree.extra["metadata"] = metadata
 
+def record_tts_metrics(
+    *,
+    model: str,
+    latency_ms: float,
+    text_length: int,
+    audio_size_bytes: int,
+    voice_id: str,
+    language: str = "ko",
+) -> None:
+    """TTS 호출 메트릭 기록"""
+    run_tree = get_current_run_tree()
+    if not run_tree:
+        return
+
+    # 문자당 처리 시간 (ms/char)
+    ms_per_char = (latency_ms / text_length) if text_length > 0 else 0
+    # 바이트당 처리 시간 추정
+    bytes_per_second = (audio_size_bytes / (latency_ms / 1000)) if latency_ms > 0 else 0
+
+    run_tree.extra["metadata"] = {
+        "model": model,
+        "voice_id": voice_id,
+        "language": language,
+        "latency_ms": round(latency_ms, 2),
+        "text_length": text_length,
+        "audio_size_bytes": audio_size_bytes,
+        "ms_per_char": round(ms_per_char, 2),
+        "bytes_per_second": round(bytes_per_second, 2),
+    }
+
 
 def record_embedding_metrics(
     *,

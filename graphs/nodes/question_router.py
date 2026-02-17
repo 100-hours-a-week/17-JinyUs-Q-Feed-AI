@@ -1,8 +1,6 @@
 # graphs/nodes/question_router.py
 
 """라우터 노드 - 분기 결정 (follow_up / new_topic / end_session)"""
-
-import time
 from langsmith import traceable
 
 from schemas.question import RouteDecision, RouterOutput
@@ -124,15 +122,12 @@ async def _invoke_router_llm(state: QuestionState) -> RouterOutput:
         interview_history=state.get("interview_history", []),
     )
     
-    start_time = time.perf_counter()
-    
     router_output = await llm.generate_structured(
         prompt=user_prompt,
         response_model=RouterOutput,
         system_prompt=system_prompt,
         temperature=0.0,
     )
-        
         
     return router_output
 

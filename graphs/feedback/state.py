@@ -30,7 +30,7 @@ class FeedbackGraphState(TypedDict):
     #input
     user_id : int
     question_id: int
-    session_id: int | None
+    session_id: str | None
     interview_type: InterviewType
     question_type: QuestionType
     category: QuestionCategory | None
@@ -72,7 +72,7 @@ def create_initial_state(
     interview_history: list[QATurn],
     interview_type: InterviewType,
     question_type: QuestionType,
-    session_id: int | None = None,
+    session_id: str | None = None,
     category: QuestionCategory | None = None,
     keywords: list[str] | None = None,
 ) -> FeedbackGraphState:

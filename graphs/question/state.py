@@ -48,7 +48,7 @@ class QuestionState(TypedDict, total=False):
     # 요청 정보 (입력)
     # ============================================================
     user_id: int
-    session_id: int
+    session_id: str
     question_type: QuestionType
     category: QuestionCategory | None
     interview_history: list[QATurn]
@@ -82,7 +82,7 @@ class QuestionState(TypedDict, total=False):
 
 def create_initial_state(
     user_id: int,
-    session_id: int,
+    session_id: str,
     question_type: QuestionType,
     category: QuestionCategory | None = None,
     interview_history: list[QATurn] | None = None,

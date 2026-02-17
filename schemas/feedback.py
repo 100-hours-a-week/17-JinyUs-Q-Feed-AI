@@ -136,7 +136,7 @@ class QATurn(BaseModel):
 class FeedbackRequest(BaseModel):
     user_id: int = Field(..., description="사용자 ID")
     question_id: int = Field(..., description="문제 ID")
-    session_id: int | None = Field(None, description="면접 세션 ID")
+    session_id: str | None = Field(None, description="면접 세션 ID")
     interview_type : InterviewType = Field(
         default=InterviewType.PRACTICE_INTERVIEW,
         description="면접 유형"
@@ -172,7 +172,7 @@ class FeedbackData(BaseModel):
     """피드백 응답 데이터"""
     user_id: int 
     question_id: int 
-    session_id: int | None = None
+    session_id: str | None = None
     
     # Bad case 결과
     bad_case_feedback: BadCaseFeedback | None = None
@@ -193,7 +193,7 @@ class FeedbackResponse(BaseResponse[FeedbackData]):
         user_id: int,
         question_id: int,
         bad_case_result: BadCaseResult,
-        session_id: int | None = None,
+        session_id: str | None = None,
     ) -> "FeedbackResponse":
         return cls(
             message="bad_case_detected",
@@ -214,7 +214,7 @@ class FeedbackResponse(BaseResponse[FeedbackData]):
         overall_feedback: OverallFeedback,
         keyword_result: KeywordCheckResult | None = None,
         topics_feedback: list[TopicFeedback] | None = None,
-        session_id: int | None = None,
+        session_id: str | None = None,
     ) -> "FeedbackResponse":
         return cls(
             message="generate_feedback_success",

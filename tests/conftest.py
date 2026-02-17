@@ -14,10 +14,14 @@ QFeed 테스트 공통 설정
 - E2E: tests/e2e/conftest.py (실제 서버 연결)
 """
 
+
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from contextlib import contextmanager
 from fastapi.testclient import TestClient
+from pathlib import Path
+from dotenv import load_dotenv
 
 from main import app
 from schemas.feedback import (
@@ -26,10 +30,19 @@ from schemas.feedback import (
     QuestionType,
     QuestionCategory,
     RubricEvaluationResult,
-    FeedbackContent,
-    AnswerAnalyzerResult,
     BadCaseType
 )
+# ============================================
+# .env 로드 (가장 먼저 실행되어야 함)
+# ============================================
+
+_project_root = Path(__file__).parent.parent
+_env_file = _project_root / ".env"
+
+if _env_file.exists():
+    load_dotenv(_env_file)
+
+# ============================================
 
 
 # ============================================
