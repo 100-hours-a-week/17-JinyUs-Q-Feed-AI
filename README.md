@@ -20,13 +20,11 @@ uv sync
 
 ## 환경 설정
 
-### test 환경 (로컬 개발)
+### local 환경 (로컬 개발)
 
 프로젝트 루트에 `.env` 파일 생성:
 
 ```env
-ENVIRONMENT=test
-
 # STT
 HUGGINGFACE_API_KEY=your_key
 STT_PROVIDER=huggingface
@@ -57,10 +55,10 @@ GPU_LLM_URL=http://gpu-llm.internal:8000
 
 ## 3. 서버 실행
 
-**test 환경 (로컬 개발)**
+**local 환경 (로컬 개발)**
 
 ```bash
-ENVIRONMENT=test uv run uvicorn main:app --reload
+ENVIRONMENT=local uv run uvicorn main:app --reload
 ```
 
 **dev 환경**
@@ -85,11 +83,11 @@ uv run uvicorn main:app
 
 ### 환경별 설정 방식
 
-| 환경   | 설정 로드 방식          | 필요한 환경변수                                                         |
-| ------ | ----------------------- | ----------------------------------------------------------------------- |
-| `test` | `.env` 파일             | `ENVIRONMENT=test`                                                      |
-| `dev`  | AWS SSM Parameter Store | `ENVIRONMENT`, `AWS_PARAMETER_STORE_PATH`, `GPU_STT_URL`, `GPU_LLM_URL` |
-| `prod` | AWS SSM Parameter Store | `ENVIRONMENT`, `AWS_PARAMETER_STORE_PATH`, `GPU_STT_URL`, `GPU_LLM_URL` |
+| 환경    | 설정 로드 방식          | 필요한 환경변수                                                         |
+| ------- | ----------------------- | ----------------------------------------------------------------------- |
+| `local` | `.env` 파일             | `ENVIRONMENT=local`                                                     |
+| `dev`   | AWS SSM Parameter Store | `ENVIRONMENT`, `AWS_PARAMETER_STORE_PATH`, `GPU_STT_URL`, `GPU_LLM_URL` |
+| `prod`  | AWS SSM Parameter Store | `ENVIRONMENT`, `AWS_PARAMETER_STORE_PATH`, `GPU_STT_URL`, `GPU_LLM_URL` |
 
 ---
 
@@ -184,5 +182,5 @@ LANGCHAIN_PROJECT=qfeed-dev  # 실행 환경에 따라 자동 설정됨
 
 로그 파일 위치:
 
-- **test**: `./logs/`
+- **local**: `./logs/`
 - **dev/production**: `/var/log/qfeed/ai/`
