@@ -6,7 +6,7 @@ from typing import Literal
 from utils.ssm_loader import get_ssm_loader
 
 class Settings(BaseSettings):
-    ENVIRONMENT: Literal["prod", "dev", "test"] = "test"
+    ENVIRONMENT: Literal["prod", "dev", "local"] = "local"
 
     # SSM Parameter Store 경로 (production, dev 환경에서 외부 주입)
     AWS_PARAMETER_STORE_PATH: str | None = None
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
             return self.LOG_DIR
         # 환경별 기본값
         log_dirs = {
-            "test": "./logs",
+            "local": "./logs",
             "dev": "/var/log/qfeed/ai",
             "prod": "/var/log/qfeed/ai",
         }
@@ -70,9 +70,9 @@ class Settings(BaseSettings):
             return self.LANGCHAIN_PROJECT
 
         project_names = {
-            "test": "qfeed-test",
+            "local": "qfeed-test",
             "dev": "qfeed-dev",
-            "production": "qfeed-prod",
+            "prod": "qfeed-prod",
         }
         return project_names.get(self.ENVIRONMENT, f"qfeed-{self.ENVIRONMENT}")
 
@@ -121,13 +121,13 @@ def _load_ssm_secrets(base_path: str) -> None:
 def get_settings() -> Settings:
     """환경에 따라 설정 로드
     
-    - production, dev: AWS SSM Parameter Store에서 시크릿 로드
+    - prod, dev: AWS SSM Parameter Store에서 시크릿 로드
       (AWS_PARAMETER_STORE_PATH 환경변수로 base path 지정 필요)
-    - test: .env 파일에서 로드 (로컬 개발/테스트용)
+    - local: .env 파일에서 로드 (로컬 개발/테스트용)
     """
-    environment = os.getenv("ENVIRONMENT", "test")
+    environment = os.getenv("ENVIRONMENT", "local")
 
-    # production, dev 환경에서는 SSM에서 시크릿 로드
+    # prod, dev 환경에서는 SSM에서 시크릿 로드
     if environment in ("production", "dev"):
         base_path = os.getenv("AWS_PARAMETER_STORE_PATH")
         
