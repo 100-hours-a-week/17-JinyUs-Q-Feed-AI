@@ -27,7 +27,7 @@ class Settings(BaseSettings):
         return log_dirs.get(self.ENVIRONMENT, "./logs")
     
     STT_PROVIDER: str = "huggingface"  #huggingface or "gpu_stt"
-    LLM_PROVIDER: str = "gemini"  # "gemini" or "vllm"
+    LLM_PROVIDER: str = "vllm"  # "gemini" or "vllm"
 
     #v1 : STT
     HUGGINGFACE_API_KEY: str
