@@ -146,9 +146,19 @@ jobs:
           echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
           echo "image=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
+      - name: Check if image exists
+        id: check
+        run: |
+          aws ecr describe-images \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --image-ids imageTag=${{ steps.meta.outputs.short_sha }} \
+            > /dev/null 2>&1 && echo "exists=true" >> "$GITHUB_OUTPUT" || echo "exists=false" >> "$GITHUB_OUTPUT"
+
       - uses: docker/setup-buildx-action@v3
+        if: steps.check.outputs.exists == 'false'
 
       - name: Build and push
+        if: steps.check.outputs.exists == 'false'
         uses: docker/build-push-action@v6
         with:
           context: .
