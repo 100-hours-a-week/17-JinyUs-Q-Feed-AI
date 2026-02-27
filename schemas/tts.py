@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 class TTSRequest(BaseModel):
     """TTS 요청 스키마"""
     user_id: int = Field(..., description="사용자 ID")
-    question_id: int = Field(..., description="질문 ID")
     session_id: str = Field(..., description="면접 세션 ID")
     text: str = Field(..., description="음성으로 변환할 텍스트")
 
