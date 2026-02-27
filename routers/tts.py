@@ -22,8 +22,7 @@ async def text_to_speech(request: TTSRequest) -> Response:
         "message": "get_audio_file_success",
         "data": {
             "user_id": request.user_id,
-            "session_id": request.session_id,
-            "question_id": request.question_id
+            "session_id": request.session_id
         }
     }
     json_content = json.dumps(json_data, ensure_ascii=False)
@@ -38,8 +37,7 @@ async def text_to_speech(request: TTSRequest) -> Response:
         f"{json_content}\r\n"
         f"--{boundary}\r\n"
         f"Content-Type: audio/mpeg\r\n"
-        f"Content-Disposition: attachment; filename=\"question_{request.question_id}.mp3\"\r\n"
-        f"\r\n"
+        f"Content-Disposition: attachment\r\n"
     ).encode('utf-8') + audio_data + f"\r\n--{boundary}--\r\n".encode('utf-8')
 
     logger.info(f"TTS 요청 완료 | user_id={request.user_id}, audio_size={len(audio_data)} bytes")
