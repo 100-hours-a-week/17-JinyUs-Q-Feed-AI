@@ -26,17 +26,17 @@ uv sync
 
 ```env
 # STT
-HUGGINGFACE_API_KEY=your_key
-STT_PROVIDER=huggingface
+HUGGINGFACE_API_KEY=your_key=""
 
 # LLM
-GEMINI_API_KEY=your_key
-LLM_PROVIDER=gemini
+GEMINI_API_KEY=your_key=""
+
+# TTS
+ELEVENLABS_API_KEY=""
 
 # GPU 서버 (선택)
-GPU_STT_URL=http://localhost:8000
-GPU_LLM_URL=http://localhost:8001
-VLLM_MODEL_ID=
+GPU_STT_URL=""
+GPU_LLM_URL=""
 
 LANGFUSE_SECRET_KEY=""
 LANGFUSE_PUBLIC_KEY=""
