@@ -30,3 +30,6 @@ jupyter/
 
 # OS
 .DS_Store
+
+# 문서 팡리
+docs/
