@@ -3,28 +3,44 @@ from core.config import get_settings
 from providers.llm.base import LLMProvider
 from providers.llm.vllm import VLLMProvider
 from providers.llm.gemini import GeminiProvider
+from providers.llm.fallback import FallbackLLMProvider
+from providers.stt.huggingface import transcribe as hf_transcribe
+from providers.stt.gpu_stt import transcribe as gpu_transcribe
+from providers.stt.base import STTProvider, SimpleSTTProvider
+from providers.stt.fallback import FallbackSTTProvider
 
-
-# from providers.stt.base import STTProvider
-# from providers.stt.huggingface import HuggingFaceSTTProvider
 settings = get_settings()
 
-_provider_cache: dict[str, LLMProvider] = {}
+_llm_cache: dict[str, LLMProvider] = {}
+_stt_cache: dict[str, STTProvider] = {}
+
 
 def get_llm_provider(provider: str | None = None) -> LLMProvider:
     provider_name = provider or settings.LLM_PROVIDER
-    if provider_name not in _provider_cache:
+    if provider_name not in _llm_cache:
         if provider_name == "vllm":
-            _provider_cache[provider_name] = VLLMProvider()
+            _llm_cache[provider_name] = FallbackLLMProvider(
+                primary=VLLMProvider(),
+                fallback=GeminiProvider(thinking_budget=0),
+            )
         else:
-            _provider_cache[provider_name] = GeminiProvider()
-    return _provider_cache[provider_name]
+            _llm_cache[provider_name] = GeminiProvider(thinking_budget=1024)
+    return _llm_cache[provider_name]
 
 
-# @lru_cache  
-# def get_stt_provider() -> STTProvider:
-#     if settings.STT_PROVIDER == "huggingface":
-
-#         return HuggingFaceSTTProvider()
-
-#     return RunpodSTTProvider()
+def get_stt_provider(provider: str | None = None) -> STTProvider:
+    provider_name = provider or settings.STT_PROVIDER
+    if provider_name not in _stt_cache:
+        if provider_name == "gpu_stt":
+            _stt_cache[provider_name] = FallbackSTTProvider(
+                primary_fn=gpu_transcribe,
+                primary_name="gpu_stt",
+                fallback_fn=hf_transcribe,
+                fallback_name="huggingface",
+            )
+        else:
+            _stt_cache[provider_name] = SimpleSTTProvider(
+                transcribe_fn=hf_transcribe,
+                name="huggingface",
+            )
+    return _stt_cache[provider_name]
