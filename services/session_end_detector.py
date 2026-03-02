@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 # 사용자가 면접 종료를 요청할 때 쓸 수 있는 표현 (공백 정규화 후 포함 여부로 판단)
 _USER_END_PHRASES = [
     "면접 종료",
-    "면접종료"
+    "면접종료",
     "면접 끝",
     "면접 끝낼게요",
     "면접 끝낼게",
@@ -42,7 +42,9 @@ _LLM_TRIGGER_HINTS = [
     "종료",
     "끝",
     "그만",
-
+    "stop",
+    "end",
+    "finish",
 ]
 
 
@@ -113,7 +115,8 @@ async def is_user_requested_session_end(
         )
 
         should_end = bool(result.should_end and result.confidence >= confidence_threshold)
-        return (should_end, float(result.confidence), result.reasoning)
+        reasoning = "llm_confident" if should_end else "llm_not_confident"
+        return (should_end, float(result.confidence), reasoning)
     except Exception as e:
         logger.warning(f"session_end_intent llm failed: {type(e).__name__}: {e}")
         return (False, 0.0, "llm_failed")
