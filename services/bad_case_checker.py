@@ -7,9 +7,8 @@ from sentence_transformers.util import cos_sim
 
 from schemas.feedback import BadCaseResult, BadCaseType, InappropriateCheckResult
 from providers.embedding.sentence_transformer import get_embedding_provider
-from providers.llm.gemini import GeminiProvider
 from prompts.bad_case import INAPPROPRIATE_CHECK_PROMPT
-from core.config import get_settings
+from core.dependencies import get_llm_provider
 from core.logging import get_logger
 from langfuse import observe
 
@@ -33,10 +32,8 @@ class BadCaseChecker:
         self.similarity_threshold = similarity_threshold
         self._kiwi = _get_kiwi()
         self._model = get_embedding_provider()
-        self._llm = GeminiProvider(
-            model=get_settings().GEMINI_LITE_MODEL_ID,
-            thinking_budget=0,
-        )
+        # Lite 모델은 dependency를 통해 공용으로 재사용
+        self._llm = get_llm_provider("gemini_lite")
 
     def check_insufficient(self, answer: str) -> bool:
         """불충분 답변 체크 - 반복 패턴 및 의미 토큰 수 기반"""
