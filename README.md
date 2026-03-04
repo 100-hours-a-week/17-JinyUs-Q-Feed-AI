@@ -10,7 +10,7 @@ AI 기반 기술 면접 연습 플랫폼의 AI 서버입니다.
 - LLM: Gemini, vLLM (a.x)
 - STT: HuggingFace Whisper, GPU STT (Whisper)
 - Orchestration: LangGraph
-- Monitoring: LangSmith
+- Monitoring: Langfuse
 
 ## 설치
 
@@ -26,10 +26,10 @@ uv sync
 
 ```env
 # STT
-HUGGINGFACE_API_KEY=your_key=""
+HUGGINGFACE_API_KEY=your_key
 
 # LLM
-GEMINI_API_KEY=your_key=""
+GEMINI_API_KEY=your_key
 
 # TTS
 ELEVENLABS_API_KEY=""
@@ -176,14 +176,15 @@ LLM_PROVIDER=vllm         # Self-hosted LLM (A.X)
 
 ## 8. 모니터링
 
-### LangSmith
+### Langfuse
 
-LangSmith를 통해 LLM 호출을 추적합니다.
+Langfuse를 통해 LLM 호출을 추적합니다.
 
 ```bash
 # 환경변수 설정
-LANGCHAIN_API_KEY=your_key
-LANGCHAIN_PROJECT=qfeed-dev  # 실행 환경에 따라 자동 설정됨
+LANGFUSE_SECRET_KEY=your_key
+LANGFUSE_PUBLIC_KEY=your_key
+LANGFUSE_BASE_URL=base_url
 ```
 
 ### 로그

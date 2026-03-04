@@ -11,10 +11,14 @@ logger = get_logger(__name__)
 
 TranscribeFunc = Callable[[str], Awaitable[str]]
 
+# GPU STT → HuggingFace 로 fallback 을 트리거할 에러 타입들
+# - 서비스 불가 / 타임아웃 / 서버 연결 실패
+# - GPU 서버 내부 오류로 인한 STT_CONVERSION_FAILED
 _FALLBACK_ERRORS = {
     ErrorMessage.STT_SERVICE_UNAVAILABLE,
     ErrorMessage.STT_TIMEOUT,
     ErrorMessage.SERVER_CONNECTION_FAILED,
+    ErrorMessage.STT_CONVERSION_FAILED,
 }
 
 
