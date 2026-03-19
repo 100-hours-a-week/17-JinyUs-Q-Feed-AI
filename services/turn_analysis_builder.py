@@ -15,11 +15,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from schemas.feedback import InterviewType, QuestionType
+from schemas.feedback_v2 import InterviewType, QuestionType
+from schemas.feedback_v2 import FeedbackRequest, RouterAnalysisTurn
 from schemas.question import QuestionGenerateRequest
 from schemas.interview_turn_analyses import (
     InterviewTurnAnalysisDocument,
     CSAnalysisDocument,
+    CSRubricDocument,
     PortfolioAnalysisDocument,
     CSFollowUpDocument,
     PortfolioFollowUpDocument,
@@ -33,6 +35,59 @@ logger = get_logger(__name__)
 
 class TurnAnalysisBuilder:
     """Graph 결과를 InterviewTurnAnalysisDocument로 변환"""
+
+    def build_practice_feedback_analysis(
+        self,
+        request: FeedbackRequest,
+        router_analysis: RouterAnalysisTurn,
+        *,
+        session_id: str,
+        rubric_result=None,
+    ) -> InterviewTurnAnalysisDocument:
+        """연습모드 피드백 분석 결과를 저장용 문서로 변환"""
+
+        last_turn = request.interview_history[-1]
+        return InterviewTurnAnalysisDocument(
+            user_id=request.user_id,
+            session_id=session_id,
+            interview_type=InterviewType.PRACTICE_INTERVIEW,
+            question_type=request.question_type,
+            turn_order=getattr(last_turn, "turn_order"),
+            topic_id=getattr(last_turn, "topic_id"),
+            route_decision=None,
+            question_text=getattr(last_turn, "question", None),
+            answer_text=getattr(last_turn, "answer_text", None),
+            question_category=self._safe_str(
+                getattr(last_turn, "category", None)
+            ),
+            question_subcategory=self._safe_str(
+                getattr(last_turn, "subcategory", None)
+            ),
+            aspect_tags=self._extract_tags(
+                getattr(last_turn, "aspect_tags", None),
+                pair_field=getattr(last_turn, "tech_aspect_pairs", None),
+                kind="aspect",
+            ),
+            tech_tags=self._extract_tags(
+                getattr(last_turn, "tech_tags", None),
+                pair_field=getattr(last_turn, "tech_aspect_pairs", None),
+                kind="tech",
+            ),
+            tech_aspect_pairs=self._extract_pair_dicts(
+                getattr(last_turn, "tech_aspect_pairs", None)
+            ),
+            portfolio_id=None,
+            question_id=request.question_id or getattr(last_turn, "question_id", None),
+            analysis=self._build_analysis_from_router_turn(
+                request.question_type,
+                router_analysis,
+            ),
+            rubric=self._build_rubric_document(rubric_result),
+            follow_up=None,
+            new_topic=None,
+            end_session=None,
+            schema_version=1,
+        )
 
     def build(
         self,
@@ -144,6 +199,53 @@ class TurnAnalysisBuilder:
             )
 
         return None
+
+    def _build_analysis_from_router_turn(
+        self,
+        question_type: QuestionType,
+        router_analysis: RouterAnalysisTurn,
+    ) -> CSAnalysisDocument | PortfolioAnalysisDocument | None:
+        """Feedback router_analyses 스키마를 저장용 analysis 문서로 변환"""
+
+        if question_type == QuestionType.CS:
+            return CSAnalysisDocument(
+                correctness=router_analysis.correctness_detail or "",
+                has_error=bool(router_analysis.has_error),
+                completeness=router_analysis.completeness_cs_detail or "",
+                has_missing_concepts=bool(router_analysis.has_missing_concepts),
+                depth=router_analysis.depth_detail or "",
+                is_superficial=bool(router_analysis.is_superficial),
+                is_well_structured=bool(router_analysis.is_well_structured),
+            )
+
+        if question_type == QuestionType.PORTFOLIO:
+            return PortfolioAnalysisDocument(
+                completeness=router_analysis.completeness_detail or "",
+                has_evidence=bool(router_analysis.has_evidence),
+                has_tradeoff=bool(router_analysis.has_tradeoff),
+                has_problem_solving=bool(router_analysis.has_problem_solving),
+                is_well_structured=bool(router_analysis.is_well_structured),
+            )
+
+        return None
+
+    @staticmethod
+    def _build_rubric_document(rubric_result) -> CSRubricDocument | None:
+        if rubric_result is None:
+            return None
+
+        return CSRubricDocument(
+            correctness=rubric_result.correctness,
+            correctness_reason=getattr(rubric_result, "correctness_reason", None),
+            completeness=rubric_result.completeness,
+            completeness_reason=getattr(rubric_result, "completeness_reason", None),
+            reasoning=rubric_result.reasoning,
+            reasoning_reason=getattr(rubric_result, "reasoning_reason", None),
+            depth=rubric_result.depth,
+            depth_reason=getattr(rubric_result, "depth_reason", None),
+            delivery=rubric_result.delivery,
+            delivery_reason=getattr(rubric_result, "delivery_reason", None),
+        )
 
     # ================================================================
     # Follow-up 빌더

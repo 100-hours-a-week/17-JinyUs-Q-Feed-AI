@@ -4,7 +4,7 @@
 
 from langfuse import observe
 
-from schemas.feedback import QuestionType
+from schemas.feedback_v2 import QuestionType
 from schemas.question import (
     QuestionGenerateRequest,
     QuestionGenerateResponse,

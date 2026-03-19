@@ -13,7 +13,7 @@ rubric_scores: rule-based 루브릭 점수
 
 from collections import defaultdict
 
-from schemas.feedback import QATurn, QuestionType
+from schemas.feedback_v2 import QATurn, QuestionType
 from schemas.feedback_v2 import (
     RouterAnalysisTurn,
     PortfolioTopicSummaryData,
@@ -48,19 +48,21 @@ PORTFOLIO_REALMODE_SYSTEM_PROMPT = """\
 - 감정적 수식어(대단합니다, 훌륭합니다, 인상깊습니다) 금지
 - 관찰자 시점(지원자는 ~를 보여주었습니다) 금지
 
+**[중요] 리스트 형식 지정:**
+- 모든 항목은 반드시 **검은 동그라미 기호(●)**로 시작해야 합니다.
+- 하이픈(-), 별표(*), 숫자(1.) 등 다른 기호는 절대 사용하지 마십시오.
+
 ### 토픽별 피드백 (topics_feedback)
 - 각 토픽의 key_points(잘 설명한 것)와 gaps(빠진 것)를 기반으로 작성
 - router_analyses의 변화 과정을 활용: "메인 질문에서는 근거가 부족했으나, 꼬리질문에서 구체적 수치를 보충해 주셨습니다"
 - strengths: 지원자가 잘 설명한 구체적 포인트를 짚어 칭찬
 - improvements: gaps에서 출발하여 무엇이 부족했는지 구체적으로 지적
-- action_items: "이렇게 하면 더 좋은 답변이 됩니다" 형태의 실행 가능한 조언 (최대 3개)
 
 ### 종합 피드백 (overall_feedback)
 토픽별 피드백과 겹치지 않는 거시적 관점:
 - 전체적인 답변 패턴, 커뮤니케이션 능력, 기술적 메타인지
 - strengths: 전체 면접에서 일관되게 보인 강점
 - improvements: 반복적으로 나타난 약점 패턴
-- action_items: 면접 준비를 위한 구체적 행동 지침 (최대 3개)
 
 ### 포트폴리오 피드백 특화 기준
 - **근거 제시**: 답변에 구체적 수치, 측정 결과가 있었는지
@@ -71,7 +73,6 @@ PORTFOLIO_REALMODE_SYSTEM_PROMPT = """\
 ## 제약 사항
 - 토픽별 피드백의 각 필드: 150자 이상 800자 이하
 - 종합 피드백의 각 필드: 150자 이상 800자 이하
-- action_items: 각 항목 1-2문장, 최대 3개
 - 리스트는 ● 기호 사용 (하이픈, 별표, 숫자 금지)
 - 한국어 경어체(합니다/습니다), 2인칭 대화형"""
 
@@ -89,12 +90,15 @@ CS_REALMODE_SYSTEM_PROMPT = """\
 - 면접관이 지원자에게 직접 1:1로 조언하는 2인칭 대화체
 - 감정적 수식어 금지, 관찰자 시점 금지
 
+**[중요] 리스트 형식 지정:**
+- 모든 항목은 반드시 **검은 동그라미 기호(●)**로 시작해야 합니다.
+- 하이픈(-), 별표(*), 숫자(1.) 등 다른 기호는 절대 사용하지 마십시오.
+
 ### 토픽별 피드백 (topics_feedback)
 - topic_summaries의 key_points/gaps + router_analyses의 상세 분석을 기반으로 작성
 - router_analyses의 변화 과정을 활용: "처음에는 정의만 말씀하셨으나, 꼬리질문에서 동작 원리를 잘 설명해 주셨습니다"
 - strengths: 정확하게 설명한 개념, 논리적 추론이 돋보인 부분
 - improvements: 오개념, 누락된 핵심 개념, 표면적 설명에 그친 부분
-- action_items: 구체적 학습 방향 (최대 3개)
 
 ### 종합 피드백 (overall_feedback)
 - 전체적인 CS 기초 이해도, 답변 구조화 능력
@@ -109,7 +113,6 @@ CS_REALMODE_SYSTEM_PROMPT = """\
 
 ## 제약 사항
 - 토픽별/종합 피드백 필드: 150자 이상 800자 이하
-- action_items: 각 항목 1-2문장, 최대 3개
 - 리스트는 ● 기호 사용
 - 한국어 경어체, 2인칭 대화형"""
 

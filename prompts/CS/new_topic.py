@@ -10,7 +10,7 @@ question_router가 new_topic으로 분기한 경우 호출된다.
 LLM: skt/A.X-4.0-Light (7B) - 명확하고 직접적인 지시 필요
 """
 
-from schemas.feedback import QuestionCategory, QATurn
+from schemas.feedback_v2 import QuestionCategory, QATurn
 from taxonomy.loader import (
     get_cs_categories_for_prompt,
     get_subcategories_for_prompt,
@@ -254,7 +254,7 @@ def _format_covered_questions(history: list[QATurn]) -> str:
 # """
 
 # from schemas.question import QuestionType
-# from schemas.feedback import QuestionCategory, QATurn
+# from schemas.feedback_v2 import QuestionCategory, QATurn
 
 
 # # ============================================================

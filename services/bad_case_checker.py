@@ -5,7 +5,7 @@ from functools import lru_cache
 from kiwipiepy import Kiwi
 from sentence_transformers.util import cos_sim
 
-from schemas.feedback import BadCaseResult, BadCaseType, InappropriateCheckResult
+from schemas.feedback_v2 import BadCaseResult, BadCaseType, InappropriateCheckResult
 from providers.embedding.sentence_transformer import get_embedding_provider
 from prompts.bad_case import INAPPROPRIATE_CHECK_PROMPT
 from core.dependencies import get_llm_provider

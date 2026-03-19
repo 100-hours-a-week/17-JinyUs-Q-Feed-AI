@@ -8,7 +8,10 @@
 시스템디자인은 현재 미지원.
 """
 
-from schemas.feedback import QuestionType, QuestionCategory
+from collections import defaultdict
+
+from schemas.feedback_v2 import QuestionType, QuestionCategory, KeywordCheckResult
+from schemas.feedback_v2 import RouterAnalysisTurn
 
 
 # ============================================================
@@ -26,6 +29,9 @@ CS_PRACTICE_FEEDBACK_SYSTEM_PROMPT = """\
 당신은 CS 기초 기술면접의 피드백을 작성하는 시니어 면접관입니다.
 지원자의 단일 답변을 분석하여 종합 피드백을 작성합니다.
 
+아래에 제공된 키워드 체크 결과와 답변 분석 결과를 우선 근거로 활용하세요.
+원문 Q&A와 충돌하는 경우에는 원문 Q&A를 우선합니다.
+
 ## 작성 원칙
 
 ### 톤
@@ -33,6 +39,10 @@ CS_PRACTICE_FEEDBACK_SYSTEM_PROMPT = """\
 - "~해 주신 점이 좋습니다", "~를 보완해 보시길 권장합니다"
 - 감정적 수식어(대단합니다, 훌륭합니다, 인상적입니다) 금지
 - 관찰자/3인칭 시점(지원자는 ~를 보여주었습니다) 금지
+
+**[중요] 리스트 형식 지정:**
+- 모든 항목은 반드시 **검은 동그라미 기호(●)**로 시작해야 합니다.
+- 하이픈(-), 별표(*), 숫자(1.) 등 다른 기호는 절대 사용하지 마십시오.
 
 ### 강점 (strengths) 작성 기준
 막연한 칭찬이 아닌, 구체적인 채점 포인트를 명시하세요:
@@ -51,12 +61,6 @@ CS_PRACTICE_FEEDBACK_SYSTEM_PROMPT = """\
 상위 문제(1-2)가 있는데 4를 포함하지 마세요.
 우선순위 라벨(1순위, [오개념 수정] 등)은 출력에 포함하지 마세요. 자연스럽게 서술하세요.
 
-### 구체적 행동 지침 (action_items)
-"무엇을 어떻게 공부/연습하라"는 실행 가능한 조언을 작성하세요:
-- 추상적 조언("더 공부하세요") 금지
-- 구체적 행동("프로세스와 스레드의 메모리 구조를 그림으로 그려보며 차이를 정리해 보세요") 권장
-- 최대 3개, 각 1-2문장
-
 ## CS 피드백 평가 축
 다음 5가지 관점에서 답변을 평가하세요:
 - **정확성**: 개념 설명에 사실적 오류가 없는가
@@ -68,7 +72,6 @@ CS_PRACTICE_FEEDBACK_SYSTEM_PROMPT = """\
 ## 제약 사항
 - strengths: 150자 이상 800자 이하
 - improvements: 150자 이상 800자 이하
-- action_items: 최대 3개, 각 1-2문장
 - 리스트는 ● 기호 사용 (하이픈, 별표, 숫자 금지)
 - 한국어 경어체(합니다/습니다), 2인칭 대화형
 - 전문 용어는 원어를 병기 (예: 컨텍스트 스위칭(Context Switching))"""
@@ -82,6 +85,8 @@ def build_practice_feedback_prompt(
     question_type: QuestionType,
     category: QuestionCategory | None,
     grouped_interview: dict[int, dict],
+    keyword_result: KeywordCheckResult | None = None,
+    router_analyses: list[RouterAnalysisTurn] | None = None,
 ) -> str:
     """연습모드 피드백 user prompt 생성
 
@@ -96,13 +101,88 @@ def build_practice_feedback_prompt(
 - 질문 유형: {question_type.value}
 - 카테고리: {category_str}
 
+## 키워드 체크
+{_format_keyword_result(keyword_result)}
+
+## 답변 분석 결과
+{_format_router_analyses(router_analyses)}
+
 ## 면접 Q&A
 {topic_data["qa_text"]}
 
-위 답변을 분석하여 강점, 개선할 점, 구체적 행동 지침을 작성하세요."""
+위 답변을 분석하여 강점과 개선할 점을 작성하세요."""
 
 
 def _format_category(category: QuestionCategory | None) -> str:
     if category is None:
         return "N/A"
     return category.value if hasattr(category, "value") else str(category)
+
+
+def _format_keyword_result(keyword_result: KeywordCheckResult | None) -> str:
+    if keyword_result is None:
+        return "키워드 체크 결과 없음"
+
+    covered = ", ".join(keyword_result.covered_keywords) or "없음"
+    missing = ", ".join(keyword_result.missing_keywords) or "없음"
+    coverage = round(keyword_result.coverage_ratio * 100)
+
+    return (
+        f"- 커버리지: {coverage}%\n"
+        f"- 포함 키워드: {covered}\n"
+        f"- 누락 키워드: {missing}"
+    )
+
+
+def _format_router_analyses(
+    router_analyses: list[RouterAnalysisTurn] | None,
+) -> str:
+    if not router_analyses:
+        return "답변 분석 결과 없음"
+
+    by_topic: dict[int, list[RouterAnalysisTurn]] = defaultdict(list)
+    for analysis in router_analyses:
+        by_topic[analysis.topic_id].append(analysis)
+
+    sections = []
+    for topic_id, analyses in sorted(by_topic.items()):
+        turn_lines = []
+        for analysis in sorted(analyses, key=lambda item: item.turn_order):
+            details = []
+
+            if analysis.correctness_detail:
+                details.append(f"정확성: {analysis.correctness_detail}")
+            if analysis.completeness_cs_detail:
+                details.append(f"완성도: {analysis.completeness_cs_detail}")
+            if analysis.completeness_detail:
+                details.append(f"완성도: {analysis.completeness_detail}")
+            if analysis.depth_detail:
+                details.append(f"깊이: {analysis.depth_detail}")
+
+            flags = []
+            if analysis.has_error is not None:
+                flags.append(f"오류={'있음' if analysis.has_error else '없음'}")
+            if analysis.has_missing_concepts is not None:
+                flags.append(f"핵심개념누락={'있음' if analysis.has_missing_concepts else '없음'}")
+            if analysis.is_superficial is not None:
+                flags.append(f"표면적={'예' if analysis.is_superficial else '아니오'}")
+            if analysis.has_evidence is not None:
+                flags.append(f"근거={'있음' if analysis.has_evidence else '없음'}")
+            if analysis.has_tradeoff is not None:
+                flags.append(f"트레이드오프={'있음' if analysis.has_tradeoff else '없음'}")
+            if analysis.has_problem_solving is not None:
+                flags.append(f"문제해결={'있음' if analysis.has_problem_solving else '없음'}")
+            if analysis.is_well_structured is not None:
+                flags.append(f"구조화={'예' if analysis.is_well_structured else '아니오'}")
+            if analysis.follow_up_direction:
+                flags.append(f"꼬리질문방향={analysis.follow_up_direction}")
+
+            line_parts = [part for part in [", ".join(details), ", ".join(flags)] if part]
+            turn_label = "메인" if analysis.turn_type == "new_topic" else "꼬리"
+            turn_lines.append(
+                f"- {turn_label} 턴 {analysis.turn_order}: " + " | ".join(line_parts)
+            )
+
+        sections.append(f"토픽 {topic_id}\n" + "\n".join(turn_lines))
+
+    return "\n\n".join(sections)

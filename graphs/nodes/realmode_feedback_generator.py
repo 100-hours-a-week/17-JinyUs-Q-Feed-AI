@@ -14,7 +14,7 @@
 
 from collections import defaultdict
 
-from schemas.feedback import QATurn, QuestionType
+from schemas.feedback_v2 import QATurn, QuestionType
 from schemas.feedback_v2 import (
     RouterAnalysisTurn,
     PortfolioTopicSummaryData,

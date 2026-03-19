@@ -14,7 +14,7 @@ CS 특성:
 from langfuse import observe
 
 from schemas.question import QuestionOutput, GeneratedQuestion, QuestionType
-from schemas.feedback import QuestionCategory, parse_category, get_valid_categories
+from schemas.feedback_v2 import QuestionCategory, parse_category, get_valid_categories
 from prompts.CS.new_topic import get_cs_new_topic_system_prompt, build_cs_new_topic_prompt
 from graphs.question.state import QuestionState
 from taxonomy.loader import validate_cs_category

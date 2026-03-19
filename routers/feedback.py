@@ -1,7 +1,7 @@
 # routers/feedback.py
 from fastapi import APIRouter
 
-from schemas.feedback import FeedbackRequest, FeedbackResponse
+from schemas.feedback_v2 import FeedbackRequest, FeedbackResponse
 from services.feedback_service import FeedbackService
 from core.logging import get_logger, log_execution_time, update_user_id
 
@@ -26,4 +26,3 @@ async def request_feedback(request: FeedbackRequest,):
     logger.info("feedback generate success")
     
     return response
-

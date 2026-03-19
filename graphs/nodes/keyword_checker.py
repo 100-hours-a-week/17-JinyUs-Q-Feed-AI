@@ -2,7 +2,7 @@ import re
 from sentence_transformers.util import cos_sim
 
 from graphs.feedback.state import FeedbackGraphState
-from schemas.feedback import KeywordCheckResult
+from schemas.feedback_v2 import KeywordCheckResult
 from providers.embedding.sentence_transformer import get_embedding_provider
 from core.logging import get_logger
 from core.tracing import update_observation

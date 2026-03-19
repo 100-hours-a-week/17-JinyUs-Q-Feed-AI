@@ -9,21 +9,231 @@
     - router_analyses의 str 분석 내용: 피드백 텍스트의 상세 근거
 """
 
-from typing import Literal
+from typing import Literal, Union
 from enum import Enum
 from pydantic import BaseModel, Field
 
-from schemas.feedback import (
-    # 기존 스키마 재사용
-    InterviewType,
-    QuestionType,
-    QuestionCategory,
-    QATurn,
-    BadCaseFeedback,
-    BadCaseResult,
-    KeywordCheckResult,
-)
 from schemas.common import BaseResponse
+from schemas.pf_question_pools import TechAspectPair
+
+
+class InterviewType(str, Enum):
+    PRACTICE_INTERVIEW = "PRACTICE_INTERVIEW"
+    REAL_INTERVIEW = "REAL_INTERVIEW"
+
+
+class QuestionType(str, Enum):
+    CS = "CS"
+    SYSTEM_DESIGN = "SYSTEM_DESIGN"
+    PORTFOLIO = "PORTFOLIO"
+
+
+class CSCategory(str, Enum):
+    OS = "OS"
+    NETWORK = "NETWORK"
+    DB = "DB"
+    DATA_STRUCTURE_ALGORITHM = "DATA_STRUCTURE_ALGORITHM"
+    COMPUTER_ARCHITECTURE = "COMPUTER_ARCHITECTURE"
+
+
+class SystemDesignCategory(str, Enum):
+    SOCIAL = "SOCIAL"
+    MESSAGING = "MESSAGING"
+    NOTIFICATION = "NOTIFICATION"
+    SEARCH = "SEARCH"
+    MEDIA = "MEDIA"
+    STORAGE = "STORAGE"
+    PLATFORM = "PLATFORM"
+    TRANSACTION = "TRANSACTION"
+
+
+class PortfolioCategory(str, Enum):
+    PORTFOLIO = "PORTFOLIO"
+
+
+QuestionCategory = Union[CSCategory, SystemDesignCategory, PortfolioCategory]
+
+
+def get_category_enum(
+    question_type: QuestionType,
+) -> type[CSCategory] | type[SystemDesignCategory] | type[PortfolioCategory] | None:
+    mapping = {
+        QuestionType.CS: CSCategory,
+        QuestionType.SYSTEM_DESIGN: SystemDesignCategory,
+        QuestionType.PORTFOLIO: PortfolioCategory,
+    }
+    return mapping.get(question_type)
+
+
+def get_valid_categories(question_type: QuestionType) -> list[str]:
+    category_enum = get_category_enum(question_type)
+    if category_enum is None:
+        return []
+    return [c.value for c in category_enum]
+
+
+def validate_category(
+    question_type: QuestionType,
+    category: QuestionCategory | None,
+) -> bool:
+    category_enum = get_category_enum(question_type)
+    if category_enum is None:
+        return category is None
+    return isinstance(category, category_enum)
+
+
+def parse_category(
+    question_type: QuestionType,
+    category_value: str,
+) -> QuestionCategory | None:
+    if not category_value:
+        return None
+
+    category_enum = get_category_enum(question_type)
+    if category_enum is None:
+        return None
+
+    try:
+        return category_enum(category_value)
+    except ValueError:
+        valid = get_valid_categories(question_type)
+        raise ValueError(
+            f"Invalid category '{category_value}' for {question_type.value}. "
+            f"Valid options: {valid}"
+        )
+
+
+class InappropriateCheckResult(BaseModel):
+    is_inappropriate: bool = Field(..., description="비속어/부적절 표현 포함 여부")
+
+
+class BadCaseType(str, Enum):
+    INSUFFICIENT = "INSUFFICIENT"
+    INAPPROPRIATE = "INAPPROPRIATE"
+    OFF_TOPIC = "OFF_TOPIC"
+
+
+BAD_CASE_MESSAGES = {
+    BadCaseType.INSUFFICIENT: {
+        "message": "답변의 내용이 부족하거나 반복적입니다.",
+        "guidance": "답변이 너무 짧거나 의미 없는 패턴이 반복되고 있습니다.",
+    },
+    BadCaseType.INAPPROPRIATE: {
+        "message": "부적절한 표현이 감지되었습니다.",
+        "guidance": "답변 내용 중 비속어나 정중하지 못한 표현이 포함되어 있습니다.",
+    },
+    BadCaseType.OFF_TOPIC: {
+        "message": "질문과 연관성이 낮은 답변입니다.",
+        "guidance": "입력하신 답변이 질문의 의도와 다소 벗어난 것 같습니다.",
+    },
+}
+
+
+class BadCaseFeedback(BaseModel):
+    type: BadCaseType = Field(..., description="Bad case 유형")
+    message: str = Field(..., description="Bad case 메시지")
+    guidance: str = Field(..., description="재답변 가이드")
+
+    @classmethod
+    def from_type(cls, bad_case_type: BadCaseType) -> "BadCaseFeedback":
+        info = BAD_CASE_MESSAGES[bad_case_type]
+        return cls(
+            type=bad_case_type,
+            message=info["message"],
+            guidance=info["guidance"],
+        )
+
+
+class BadCaseResult(BaseModel):
+    is_bad_case: bool = Field(None, description="Bad case 여부")
+    bad_case_feedback: BadCaseFeedback | None = Field(
+        None,
+        description="Bad case 피드백",
+    )
+
+    @classmethod
+    def normal(cls) -> "BadCaseResult":
+        return cls(is_bad_case=False)
+
+    @classmethod
+    def bad(cls, bad_type: BadCaseType) -> "BadCaseResult":
+        return cls(
+            is_bad_case=True,
+            bad_case_feedback=BadCaseFeedback.from_type(bad_type),
+        )
+
+
+class KeywordCheckResult(BaseModel):
+    covered_keywords: list[str] = Field(default_factory=list, description="포함된 키워드")
+    missing_keywords: list[str] = Field(default_factory=list, description="누락된 키워드")
+    coverage_ratio: float = Field(..., ge=0.0, le=1.0, description="키워드 커버리지 비율")
+
+
+class QATurn(BaseModel):
+    question: str = Field(..., description="질문 텍스트")
+    question_id: int | None = Field(None, description="질문 id")
+    category: QuestionCategory = Field(..., description="문제 카테고리")
+    subcategory: str | None = Field(
+        None,
+        description="문제 소분류 ID (CS taxonomy subcategory)",
+    )
+    tech_tags: list[str] = Field(default_factory=list, description="포트폴리오 기술 태그")
+    aspect_tags: list[str] = Field(default_factory=list, description="포트폴리오 관점 태그")
+    tech_aspect_pairs: list[TechAspectPair] = Field(
+        default_factory=list,
+        description="포트폴리오 질문의 기술-관점 pair",
+    )
+    answer_text: str = Field(..., description="답변 텍스트")
+    turn_type: Literal["new_topic", "follow_up"] = Field(..., description="질문 유형")
+    turn_order: int = Field(..., description="전체 세션 내 순서")
+    topic_id: int = Field(..., description="토픽 그룹 ID")
+
+
+class RubricScore(BaseModel):
+    name: str
+    score: int = Field(..., description="루브릭 점수 (1-5)")
+
+
+class RubricEvaluationResult(BaseModel):
+    """Legacy compatibility schema for older tests/tools."""
+
+    accuracy: int = Field(..., ge=1, le=5, description="정확도")
+    logic: int = Field(..., ge=1, le=5, description="논리력")
+    specificity: int = Field(..., ge=1, le=5, description="구체성")
+    completeness: int = Field(..., ge=1, le=5, description="완성도")
+    delivery: int = Field(..., ge=1, le=5, description="전달력")
+    accuracy_rationale: str | None = None
+    logic_rationale: str | None = None
+    specificity_rationale: str | None = None
+    completeness_rationale: str | None = None
+    delivery_rationale: str | None = None
+
+    def to_metrics_list(self) -> list[RubricScore]:
+        return [
+            RubricScore(name="정확도", score=self.accuracy),
+            RubricScore(name="논리력", score=self.logic),
+            RubricScore(name="구체성", score=self.specificity),
+            RubricScore(name="완성도", score=self.completeness),
+            RubricScore(name="전달력", score=self.delivery),
+        ]
+
+
+class FeedbackContent(BaseModel):
+    """Legacy compatibility schema for older tests/tools."""
+
+    strengths: str
+    improvements: str
+
+
+class AnswerAnalyzerResult(BaseModel):
+    """Legacy compatibility schema for older tests/tools."""
+
+    is_bad_case: bool
+    bad_case_type: BadCaseType | None = None
+    short_advice: str | None = None
+    has_weakness: bool = False
+    needs_followup: bool = False
+    followup_reason: str | None = None
 
 
 # ============================================================
@@ -117,15 +327,30 @@ class PortfolioRubricScores(BaseModel):
 
 class CSRubricScores(BaseModel):
     """CS 루브릭 점수 (5개 지표)
-
+    
     실전모드: rule-based scorer가 router_analyses로 산출
     연습모드: LLM structured output으로 직접 산출
     """
     correctness: int = Field(..., ge=1, le=5, description="정확성")
+    correctness_reason: str | None = Field(
+        None, description="정확성 점수의 근거 (1-2문장)"
+    )
     completeness: int = Field(..., ge=1, le=5, description="완성도")
+    completeness_reason: str | None = Field(
+        None, description="완성도 점수의 근거 (1-2문장)"
+    )
     reasoning: int = Field(..., ge=1, le=5, description="논리적 추론")
+    reasoning_reason: str | None = Field(
+        None, description="논리적 추론 점수의 근거 (1-2문장)"
+    )
     depth: int = Field(..., ge=1, le=5, description="깊이")
+    depth_reason: str | None = Field(
+        None, description="깊이 점수의 근거 (1-2문장)"
+    )
     delivery: int = Field(..., ge=1, le=5, description="전달력")
+    delivery_reason: str | None = Field(
+        None, description="전달력 점수의 근거 (1-2문장)"
+    )
 
     def to_metrics_list(self) -> list[dict]:
         return [
@@ -181,6 +406,9 @@ class FeedbackRequest(BaseModel):
     question_id: int | None = Field(None, description="문제 ID (연습모드)")
     keywords: list[str] | None = Field(None, description="필수 키워드 목록 (연습모드)")
     category: QuestionCategory | None = Field(None, description="문제 카테고리 (연습모드)")
+    subcategory: str | None = Field(
+        None, description="문제 소분류 ID (연습모드 CS taxonomy subcategory)"
+    )
 
     # 실전모드 전용
     session_id: str | None = Field(None, description="면접 세션 ID (실전모드)")
@@ -206,18 +434,12 @@ class TopicFeedback(BaseModel):
     topic_name: str = Field(..., description="토픽명")
     strengths: str = Field(..., description="해당 토픽에서 잘한 점 (150-800자)")
     improvements: str = Field(..., description="해당 토픽에서 개선할 점 (150-800자)")
-    action_items: list[str] = Field(
-        ..., description="구체적 개선 행동 (최대 3개)"
-    )
 
 
 class OverallFeedback(BaseModel):
     """종합 피드백 v2"""
     strengths: str = Field(..., description="전체적으로 잘한 점 (150-800자)")
     improvements: str = Field(..., description="전체적으로 개선할 점 (150-800자)")
-    action_items: list[str] = Field(
-        ..., description="구체적 개선 행동 (최대 3개)"
-    )
 
 
 class RealModeFeedback(BaseModel):

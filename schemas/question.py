@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from schemas.common import BaseResponse
 from schemas.pf_question_pools import TechAspectPair
-from schemas.feedback import (
+from schemas.feedback_v2 import (
     QATurn, 
     QuestionType, 
     QuestionCategory,

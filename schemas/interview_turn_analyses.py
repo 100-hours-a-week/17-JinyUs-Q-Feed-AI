@@ -1,7 +1,7 @@
 from typing import Optional, Union
 from datetime import datetime
 from pydantic import BaseModel, Field
-from schemas.feedback import InterviewType, QuestionType
+from schemas.feedback_v2 import InterviewType, QuestionType
 from schemas.question import CSFollowUpDirection, PortfolioFollowUpDirection, RouteDecision
 
 
@@ -23,6 +23,19 @@ class PortfolioAnalysisDocument(BaseModel):
     has_tradeoff: bool
     has_problem_solving: bool
     is_well_structured: bool
+
+
+class CSRubricDocument(BaseModel):
+    correctness: int
+    correctness_reason: str | None = None
+    completeness: int
+    completeness_reason: str | None = None
+    reasoning: int
+    reasoning_reason: str | None = None
+    depth: int
+    depth_reason: str | None = None
+    delivery: int
+    delivery_reason: str | None = None
 
 
 class CSFollowUpDocument(BaseModel):
@@ -55,7 +68,7 @@ class InterviewTurnAnalysisDocument(BaseModel):
     question_type: QuestionType
     turn_order: int
     topic_id: int
-    route_decision: RouteDecision
+    route_decision: Optional[RouteDecision] = None
 
     question_text: Optional[str] = None
     answer_text: Optional[str] = None
@@ -71,6 +84,7 @@ class InterviewTurnAnalysisDocument(BaseModel):
     question_id: Optional[int] = None 
 
     analysis: Optional[Union[CSAnalysisDocument, PortfolioAnalysisDocument]] = None
+    rubric: Optional[CSRubricDocument] = None
     follow_up: Optional[Union[CSFollowUpDocument, PortfolioFollowUpDocument]] = None
     new_topic: Optional[NewTopicDocument] = None
     end_session: Optional[EndSessionDocument] = None

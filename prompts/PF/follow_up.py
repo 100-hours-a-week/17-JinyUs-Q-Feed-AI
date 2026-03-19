@@ -12,7 +12,7 @@ CS follow_up과의 차이:
     - 지원자의 실제 경험에 기반한 질문이어야 함
 """
 
-from schemas.feedback import QATurn
+from schemas.feedback_v2 import QATurn
 from taxonomy.loader import get_aspect_tags_for_prompt, get_tech_tags_for_prompt
 
 

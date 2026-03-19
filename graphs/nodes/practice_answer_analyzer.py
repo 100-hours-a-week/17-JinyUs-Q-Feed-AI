@@ -7,10 +7,9 @@ from prompts.practice_answer_analysis import (
     build_practice_answer_analysis_prompt,
     get_practice_analysis_system_prompt,
 )
-from schemas.feedback import QuestionType
+from schemas.feedback_v2 import QuestionType
 from schemas.feedback_v2 import RouterAnalysisTurn
-from schemas.question import CSAnswerAnalysis, PortfolioAnswerAnalysis
-
+from schemas.question import CSAnswerAnalysis
 logger = get_logger(__name__)
 
 
@@ -18,28 +17,24 @@ logger = get_logger(__name__)
 async def practice_answer_analyzer(state: FeedbackGraphState) -> dict:
     question_type = state["question_type"]
     llm = get_llm_provider("gemini")
+    last_turn = state["interview_history"][-1]
 
     prompt = build_practice_answer_analysis_prompt(
         question_type=question_type,
         interview_history=state["interview_history"],
         category=state.get("category"),
+        subcategory=state.get("subcategory") or getattr(last_turn, "subcategory", None),
     )
     system_prompt = get_practice_analysis_system_prompt(question_type)
-    response_model = (
-        PortfolioAnswerAnalysis
-        if question_type == QuestionType.PORTFOLIO
-        else CSAnswerAnalysis
-    )
 
     result = await llm.generate_structured(
         prompt=prompt,
-        response_model=response_model,
+        response_model=CSAnswerAnalysis,
         system_prompt=system_prompt,
         temperature=0.0,
         max_tokens=1200,
     )
 
-    last_turn = state["interview_history"][-1]
     router_analysis = _to_router_analysis_turn(
         question_type=question_type,
         turn=last_turn,
@@ -72,15 +67,6 @@ def _to_router_analysis_turn(
         "is_well_structured": analysis.get("is_well_structured"),
         "follow_up_direction": None,
     }
-
-    if question_type == QuestionType.PORTFOLIO:
-        return RouterAnalysisTurn(
-            **base,
-            completeness_detail=analysis.get("completeness"),
-            has_evidence=analysis.get("has_evidence"),
-            has_tradeoff=analysis.get("has_tradeoff"),
-            has_problem_solving=analysis.get("has_problem_solving"),
-        )
 
     return RouterAnalysisTurn(
         **base,

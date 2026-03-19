@@ -1,6 +1,6 @@
 """포트폴리오(Portfolio) 관련 라우터 프롬프트 모음."""
 
-from schemas.feedback import QATurn
+from schemas.feedback_v2 import QATurn
 from graphs.question.state import TopicSummary
 
 # ============================================================

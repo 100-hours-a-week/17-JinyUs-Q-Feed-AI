@@ -46,9 +46,9 @@ class InterviewTurnAnalysisRepository:
 
         logger.info(
             "interview_turn_analysis saved | session_id=%s | turn_order=%s | route=%s",
-            payload ["session_id"],
-            payload ["turn_order"],
-            payload ["route_decision"],
+            payload["session_id"],
+            payload["turn_order"],
+            payload.get("route_decision"),
         )
 
     async def list_unprocessed_turns(

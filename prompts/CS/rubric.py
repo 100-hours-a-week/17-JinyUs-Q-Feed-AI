@@ -15,7 +15,7 @@ CS 루브릭 지표 (5개):
     - delivery: 전달력 (1-5)
 """
 
-from schemas.feedback import QuestionType
+from schemas.feedback_v2 import QuestionType
 
 
 # ============================================================
@@ -30,7 +30,7 @@ def get_rubric_system_prompt(question_type: QuestionType) -> str:
 
 CS_RUBRIC_SYSTEM_PROMPT = """\
 당신은 CS 기초 기술면접 답변을 평가하는 채점관입니다.
-아래 5개 지표에 대해 1-5점으로 채점하세요.
+아래 5개 지표에 대해 1-5점으로 채점하고, 각 점수의 근거를 1-2문장으로 작성하세요.
 
 ## 채점 지표
 
@@ -101,4 +101,5 @@ def build_rubric_prompt(
 ## 면접 Q&A
 {interview_text}
 
-위 답변을 5개 지표(correctness, completeness, reasoning, depth, delivery)로 채점하세요."""
+위 답변을 5개 지표(correctness, completeness, reasoning, depth, delivery)로 채점하고,
+각 지표의 점수 근거(reason)도 함께 작성하세요."""

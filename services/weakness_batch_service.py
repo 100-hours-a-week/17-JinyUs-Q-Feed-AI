@@ -9,7 +9,7 @@ from core.mongodb import get_mongo_client
 from repositories.interview_turn_analysis_repo import InterviewTurnAnalysisRepository
 from repositories.user_weakness_profile_repo import UserWeaknessProfileRepository
 from pymongo.asynchronous.client_session import AsyncClientSession
-from schemas.feedback import InterviewType, QuestionType
+from schemas.feedback_v2 import InterviewType, QuestionType
 from schemas.user_weakness_profiles import (
     CSCategoryWeakness,
     CSSubcategoryWeakness,

@@ -11,7 +11,7 @@
 """
 
 from graphs.feedback.state import FeedbackGraphState
-from schemas.feedback import QuestionType
+from schemas.feedback_v2 import QuestionType
 from schemas.feedback_v2 import CSRubricScores
 from prompts.CS.rubric import (
     get_rubric_system_prompt,

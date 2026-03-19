@@ -14,7 +14,7 @@ from collections import defaultdict
 
 from graphs.feedback.state import FeedbackGraphState, QATurn
 from schemas.feedback_v2 import OverallFeedback
-from schemas.feedback import QuestionType
+from schemas.feedback_v2 import QuestionType
 from prompts.feedback_practice_mode import (
     get_practice_feedback_system_prompt,
     build_practice_feedback_prompt,
@@ -58,7 +58,7 @@ def group_turns_by_topic(turns: list[QATurn]) -> dict[int, dict]:
 async def feedback_generator(state: FeedbackGraphState) -> dict:
     """연습모드 피드백 텍스트 생성 노드
 
-    단일 Q&A에 대한 종합 피드백(strengths + improvements + action_items)을 생성.
+    단일 Q&A에 대한 종합 피드백(strengths + improvements)을 생성.
     question_type에 따라 다른 프롬프트를 사용.
 
     Returns:
@@ -80,6 +80,8 @@ async def feedback_generator(state: FeedbackGraphState) -> dict:
         question_type=state["question_type"],
         category=state.get("category"),
         grouped_interview=grouped_interview,
+        keyword_result=state.get("keyword_result"),
+        router_analyses=state.get("router_analyses"),
     )
 
     result = await llm.generate_structured(
@@ -93,8 +95,7 @@ async def feedback_generator(state: FeedbackGraphState) -> dict:
     logger.info(
         f"Practice feedback generated | "
         f"question_type={state['question_type'].value} | "
-        f"strengths_len={len(result.strengths)} | "
-        f"action_items={len(result.action_items)}"
+        f"strengths_len={len(result.strengths)}"
     )
 
     return {

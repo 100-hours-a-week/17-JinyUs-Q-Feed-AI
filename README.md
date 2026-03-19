@@ -92,7 +92,15 @@ uv run uvicorn main:app
 
 ---
 
-## 4. API 엔드포인트
+## 4. 배치 처리
+
+**약점 프로파일 배치 실행**
+
+```bash
+uv run python scripts/run_weakness_batch.py
+```
+
+## 5. API 엔드포인트
 
 | Method | Endpoint                          | 설명                             |
 | ------ | --------------------------------- | -------------------------------- |
@@ -104,7 +112,7 @@ uv run uvicorn main:app
 
 ---
 
-## 5. 테스트
+## 6. 테스트
 
 ```bash
 # 전체 테스트
@@ -132,7 +140,7 @@ uv run ruff format --check .
 
 ---
 
-## 6. 프로젝트 구조
+## 7. 프로젝트 구조
 
 ```
 tree -I '__pycache__|.git|node_modules|.venv|.env|tests|scripts|jupyter|audio_data|.github|.pytest_cache|.ruff_cache' -a --dirsfirst
@@ -158,7 +166,7 @@ tree -I '__pycache__|.git|node_modules|.venv|.env|tests|scripts|jupyter|audio_da
 
 ---
 
-## 7. Provider 설정
+## 8. Provider 설정
 
 ### STT Provider
 
@@ -176,7 +184,7 @@ LLM_PROVIDER=vllm         # Self-hosted LLM (A.X)
 
 ---
 
-## 8. 모니터링
+## 9. 모니터링
 
 ### Langfuse
 

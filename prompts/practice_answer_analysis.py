@@ -1,4 +1,4 @@
-from schemas.feedback import QATurn, QuestionCategory, QuestionType
+from schemas.feedback_v2 import QATurn, QuestionCategory, QuestionType
 
 
 CS_PRACTICE_ANALYSIS_SYSTEM_PROMPT = """\
@@ -20,27 +20,7 @@ CS_PRACTICE_ANALYSIS_SYSTEM_PROMPT = """\
 - 출력은 주어진 스키마 필드만 채우세요"""
 
 
-PF_PRACTICE_ANALYSIS_SYSTEM_PROMPT = """\
-당신은 포트폴리오 기술면접 답변 분석기입니다.
-지원자의 답변 자체만 평가하고, 다음 질문 방향은 판단하지 마세요.
-
-다음 기준으로 마지막 답변 1개를 분석하세요.
-
-1. 완성도(completeness): 질문의 핵심을 짚었는가
-2. 근거(has_evidence): 수치, 사례, 실제 경험이 있는가
-3. 트레이드오프(has_tradeoff): 장단점이나 대안 비교가 있는가
-4. 문제해결(has_problem_solving): 문제 상황과 해결 과정이 있는가
-5. 전달력(is_well_structured): 논리적 순서로 전달되었는가
-
-중요 규칙:
-- completeness는 1~2문장으로 간결하게 작성하세요
-- 질문에서 요구하지 않은 내용을 추측해서 채우지 마세요
-- 출력은 주어진 스키마 필드만 채우세요"""
-
-
 def get_practice_analysis_system_prompt(question_type: QuestionType) -> str:
-    if question_type == QuestionType.PORTFOLIO:
-        return PF_PRACTICE_ANALYSIS_SYSTEM_PROMPT
     return CS_PRACTICE_ANALYSIS_SYSTEM_PROMPT
 
 
@@ -48,6 +28,7 @@ def build_practice_answer_analysis_prompt(
     question_type: QuestionType,
     interview_history: list[QATurn],
     category: QuestionCategory | None = None,
+    subcategory: str | None = None,
 ) -> str:
     last_turn = interview_history[-1]
     current_topic_turns = [
@@ -55,11 +36,13 @@ def build_practice_answer_analysis_prompt(
     ]
     current_topic_qa = _format_current_topic_qa(current_topic_turns)
     category_str = _format_category(category or getattr(last_turn, "category", None))
+    subcategory_str = subcategory or getattr(last_turn, "subcategory", None) or "N/A"
 
     return f"""\
 ## 질문 정보
 - 질문 유형: {question_type.value}
 - 카테고리: {category_str}
+- subcategory: {subcategory_str}
 - 토픽 ID: {last_turn.topic_id}
 - 턴 순서: {last_turn.turn_order}
 - 턴 유형: {last_turn.turn_type}

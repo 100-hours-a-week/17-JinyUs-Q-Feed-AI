@@ -1,7 +1,7 @@
 from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
-from schemas.feedback import InterviewType, QuestionType
+from schemas.feedback_v2 import InterviewType, QuestionType
 
 
 class SessionTopicSummaryDocument(BaseModel):

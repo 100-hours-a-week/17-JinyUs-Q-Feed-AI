@@ -1,4 +1,4 @@
-from schemas.feedback import QATurn
+from schemas.feedback_v2 import QATurn
 
 
 # ============================================================

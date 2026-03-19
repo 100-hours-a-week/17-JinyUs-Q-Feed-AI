@@ -7,7 +7,7 @@ CS / 포트폴리오 모두 동일한 프롬프트를 사용.
 토픽의 Q&A를 보고 핵심 포인트, 부족한 부분, 깊이, 기술 목록을 요약.
 """
 
-from schemas.feedback import QATurn
+from schemas.feedback_v2 import QATurn
 
 
 TOPIC_SUMMARIZER_SYSTEM_PROMPT = """\

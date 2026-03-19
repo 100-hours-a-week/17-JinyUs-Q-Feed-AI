@@ -15,7 +15,7 @@ from langfuse import observe
 from graphs.question.state import QuestionState
 from graphs.question.cs_question_graph import get_cs_question_graph
 from graphs.question.pf_question_graph import get_pf_question_graph
-from schemas.feedback import QuestionType
+from schemas.feedback_v2 import QuestionType
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 from core.logging import get_logger
