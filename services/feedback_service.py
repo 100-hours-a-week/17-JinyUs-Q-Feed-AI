@@ -49,7 +49,7 @@ from repositories.session_topic_summary_repo import SessionTopicSummaryRepositor
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 from core.logging import get_logger
-from core.tracing import update_trace, update_observation
+from core.tracing import update_trace, update_observation, update_span
 from langfuse import observe
 
 logger = get_logger(__name__)
@@ -214,6 +214,7 @@ class FeedbackService:
             overall_feedback=feedback_result["overall_feedback"],
         )
 
+    @observe(name="load_realmode_artifacts", as_type="tool")
     async def _load_realmode_artifacts(
         self,
         request: FeedbackRequest,
@@ -222,6 +223,15 @@ class FeedbackService:
         list[PortfolioTopicSummaryData] | list[CSTopicSummaryData],
     ]:
         """실전모드 피드백에 필요한 분석/요약 데이터를 DB에서 로드"""
+
+        update_span(
+            input={
+                "user_id": request.user_id,
+                "session_id": request.session_id,
+                "question_type": request.question_type.value,
+                "interview_type": request.interview_type.value,
+            }
+        )
 
         turn_docs = await self._turn_analysis_repo.list_session_turn_analyses(
             user_id=request.user_id,
@@ -249,6 +259,19 @@ class FeedbackService:
             request.session_id,
             len(router_analyses),
             len(topic_summaries),
+        )
+
+        update_span(
+            output={
+                "turn_docs_count": len(turn_docs),
+                "topic_docs_count": len(topic_docs),
+                "router_analyses_count": len(router_analyses),
+                "topic_summaries_count": len(topic_summaries),
+            },
+            metadata={
+                "session_id": request.session_id,
+                "question_type": request.question_type.value,
+            },
         )
 
         return router_analyses, topic_summaries

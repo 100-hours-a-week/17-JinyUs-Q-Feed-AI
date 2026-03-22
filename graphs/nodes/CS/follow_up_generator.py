@@ -139,7 +139,7 @@ async def _generate_cs_follow_up_llm(
         current_subcategory=last_turn.subcategory,
     )
 
-    llm_provider = get_llm_provider("gemini")
+    llm_provider = get_llm_provider("vllm")
 
     follow_up_output = await llm_provider.generate_structured(
         prompt=user_prompt,

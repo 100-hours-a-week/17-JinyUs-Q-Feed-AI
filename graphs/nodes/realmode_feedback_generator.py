@@ -58,7 +58,7 @@ async def feedback_generator_realmode(
         dict: topics_feedback + overall_feedback
     """
 
-    llm = get_llm_provider("gemini")
+    llm = get_llm_provider("vllm")
 
     system_prompt = get_realmode_feedback_system_prompt(question_type)
 
