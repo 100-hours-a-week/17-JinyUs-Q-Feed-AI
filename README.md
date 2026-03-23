@@ -92,19 +92,27 @@ uv run uvicorn main:app
 
 ---
 
-## 4. API 엔드포인트
+## 4. 배치 처리
 
-| Method | Endpoint                          | 설명                             |
-| ------ | --------------------------------- | -------------------------------- |
-| `POST` | `/ai/stt`                         | 음성 파일을 텍스트로 변환        |
-| `POST` | `/ai/interview/feedback/request`  | AI 피드백 생성 요청              |
-| `POST` | `/ai/interview/follow-up`         | 질문 생성(new_topic, follow_up)  |
-| `POST` | `/ai/interview/feedback/generate` | 피드백 생성 결과 전송 (Callback) |
-| `POST` | `/ai/tts`                         | 텍스트를 음성 파일로 변환        |
+**약점 프로파일 배치 실행**
+
+```bash
+uv run python scripts/run_weakness_batch.py
+```
+
+## 5. API 엔드포인트
+
+| Method | Endpoint                            | 설명                            |
+| ------ | ----------------------------------- | ------------------------------- |
+| `POST` | `/ai/stt`                           | 음성 파일을 텍스트로 변환       |
+| `POST` | `/ai/interview/feedback/request`    | AI 피드백 생성 요청             |
+| `POST` | `/ai/interview/follow-up/questions` | 질문 생성(new_topic, follow_up) |
+| `POST` | `/ai/tts`                           | 텍스트를 음성 파일로 변환       |
+| `POST` | `/ai/portfolio`                     | 포트폴리오 분석 및 질문 풀 생성 |
 
 ---
 
-## 5. 테스트
+## 6. 테스트
 
 ```bash
 # 전체 테스트
@@ -132,9 +140,11 @@ uv run ruff format --check .
 
 ---
 
-## 6. 프로젝트 구조
+## 7. 프로젝트 구조
 
 ```
+tree -I '__pycache__|.git|node_modules|.venv|.env|tests|scripts|jupyter|audio_data|.github|.pytest_cache|.ruff_cache' -a --dirsfirst
+
 .
 ├── core/                 # 설정, 의존성, 로깅, 모니터링
 ├── exceptions/           # 커스텀 예외 처리
@@ -156,7 +166,7 @@ uv run ruff format --check .
 
 ---
 
-## 7. Provider 설정
+## 8. Provider 설정
 
 ### STT Provider
 
@@ -174,7 +184,7 @@ LLM_PROVIDER=vllm         # Self-hosted LLM (A.X)
 
 ---
 
-## 8. 모니터링
+## 9. 모니터링
 
 ### Langfuse
 

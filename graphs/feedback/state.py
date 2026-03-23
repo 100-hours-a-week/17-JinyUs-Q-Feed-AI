@@ -10,17 +10,18 @@
 
 from typing import TypedDict
 
-from schemas.feedback import(
+from schemas.feedback_v2 import(
     InterviewType,
     QuestionType,
     QuestionCategory,
     QATurn,
     BadCaseResult,
+    CSRubricScores,
     KeywordCheckResult,
-    RubricEvaluationResult,
     TopicFeedback,
     OverallFeedback
 )
+from schemas.feedback_v2 import RouterAnalysisTurn
 
 class FeedbackGraphState(TypedDict):
     """
@@ -34,6 +35,7 @@ class FeedbackGraphState(TypedDict):
     interview_type: InterviewType
     question_type: QuestionType
     category: QuestionCategory | None
+    subcategory: str | None
 
     # 면접 히스토리
     interview_history: list[QATurn]
@@ -48,7 +50,10 @@ class FeedbackGraphState(TypedDict):
     keyword_result: KeywordCheckResult | None
 
     #RubricEvaluator 노드 출력
-    rubric_result : RubricEvaluationResult | None
+    rubric_result : CSRubricScores | None
+
+    # PracticeAnswerAnalyzer 노드 출력
+    router_analyses: list[RouterAnalysisTurn] | None
 
     #FeedbackGenerator 노드 출력
     topics_feedback : TopicFeedback | None
@@ -74,6 +79,7 @@ def create_initial_state(
     question_type: QuestionType,
     session_id: str | None = None,
     category: QuestionCategory | None = None,
+    subcategory: str | None = None,
     keywords: list[str] | None = None,
 ) -> FeedbackGraphState:
     """FeedbackRequest로부터 초기 State 생성"""
@@ -85,6 +91,7 @@ def create_initial_state(
         interview_type=interview_type,
         question_type=question_type,
         category=category,
+        subcategory=subcategory,
         interview_history=interview_history,
         keywords=keywords,
         
@@ -92,6 +99,7 @@ def create_initial_state(
         bad_case_result=None,
         keyword_result=None,
         rubric_result=None,
+        router_analyses=None,
         topics_feedback=None,
         overall_feedback=None,
         
